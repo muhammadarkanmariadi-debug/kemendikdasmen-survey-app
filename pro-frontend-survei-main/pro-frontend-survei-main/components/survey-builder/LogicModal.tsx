@@ -6,6 +6,8 @@ import { IPertanyaan, IKategori } from '@/app/types';
 import { GitFork, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+const BRANCHABLE_TYPES = ['PILIHAN', 'PILIHAN_GANDA', 'CHECKBOX', 'KOTAK_CENTANG', 'DROPDOWN'];
+
 interface LogicModalProps {
   isShow: boolean;
   onClose: () => void;
@@ -13,6 +15,7 @@ interface LogicModalProps {
   allQuestions: IPertanyaan[];
   allCategories: IKategori[];
   onSaveRule: (rule: any) => Promise<void>;
+  onDeleteRule?: (ruleId: string) => Promise<void>;
 }
 
 export function LogicModal({
@@ -22,6 +25,7 @@ export function LogicModal({
   allQuestions,
   allCategories,
   onSaveRule,
+  onDeleteRule,
 }: LogicModalProps) {
   const [sourceQuestionId, setSourceQuestionId] = useState<string>('');
   const [operator, setOperator] = useState<string>('EQUALS');
@@ -29,14 +33,13 @@ export function LogicModal({
   const [triggerValue, setTriggerValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Available source questions: all questions except the current one
+  // Branching logic only applies to Pilihan Ganda, Checkbox, and Dropdown source questions
   const availableSourceQuestions = allQuestions.filter(
-    (q) => question && q.uuid !== question.uuid
+    (q) => question && q.uuid !== question.uuid && BRANCHABLE_TYPES.includes(q.jenis)
   );
 
   const selectedSourceQuestion = availableSourceQuestions.find(
     (q) => q.uuid === sourceQuestionId
-    
   );
 
   const handleSave = async (e: React.FormEvent) => {
@@ -45,17 +48,26 @@ export function LogicModal({
       toast.warning('Pilih pertanyaan pemicu terlebih dahulu.');
       return;
     }
+    if (operator !== 'IS_NOT_EMPTY' && !triggerOptionId) {
+      toast.warning('Pilih opsi jawaban acuan terlebih dahulu.');
+      return;
+    }
+
+    const selectedOpt = selectedSourceQuestion?.opsi_pertanyaan?.find(
+      (o) => o.uuid === triggerOptionId
+    );
 
     try {
       setIsSubmitting(true);
       await onSaveRule({
         id_target_pertanyaan: question?.uuid,
         id_source_pertanyaan: sourceQuestionId,
-        id_opsi_pemicu: triggerOptionId || null,
+        id_opsi_pemicu: operator === 'IS_NOT_EMPTY' ? null : triggerOptionId || null,
         operator,
-        nilai_pemicu: triggerValue || '',
+        nilai_pemicu: selectedOpt?.opsi_jawaban || triggerValue || '',
       });
-      toast.success('Aturan logika percabangan berhasil disimpan!');
+      setSourceQuestionId('');
+      setTriggerOptionId('');
       onClose();
     } catch (err: any) {
       toast.error(`Gagal menyimpan aturan: ${err.message}`);
@@ -90,10 +102,50 @@ export function LogicModal({
             />
           </div>
 
+          {question.target_rules && question.target_rules.length > 0 && (
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-semibold text-slate-600 block">
+                Aturan Logika Aktif ({question.target_rules.length}):
+              </span>
+              {question.target_rules.map((r: any) => {
+                const srcQ = allQuestions.find((q) => q.uuid === r.id_source_pertanyaan);
+                const srcOpt = srcQ?.opsi_pertanyaan?.find((o) => o.uuid === r.id_opsi_pemicu);
+                return (
+                  <div
+                    key={r.uuid}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-purple-50/70 border border-purple-200 text-[11px] text-purple-900"
+                  >
+                    <span className="truncate">
+                      Jika <strong>{srcQ?.pertanyaan.replace(/<[^>]*>?/gm, '').slice(0, 35) || 'Pertanyaan'}</strong>{' '}
+                      {r.operator === 'IS_NOT_EMPTY'
+                        ? 'sudah dijawab'
+                        : r.operator === 'NOT_EQUALS'
+                        ? `≠ "${srcOpt?.opsi_jawaban || r.nilai_pemicu}"`
+                        : `= "${srcOpt?.opsi_jawaban || r.nilai_pemicu}"`}
+                    </span>
+                    {onDeleteRule && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteRule(r.uuid)}
+                        className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer shrink-0"
+                        title="Hapus aturan"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
               1. Tampilkan pertanyaan ini hanya jika pertanyaan berikut dijawab:
             </label>
+            <p className="text-[11px] text-slate-500 mb-1.5">
+              Percabangan logika hanya berlaku untuk pertanyaan bertipe <strong>Pilihan Ganda</strong>, <strong>Checkbox</strong>, dan <strong>Dropdown</strong>.
+            </p>
             <select
               value={sourceQuestionId}
               onChange={(e) => {
@@ -102,7 +154,11 @@ export function LogicModal({
               }}
               className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             >
-              <option value="">-- Pilih Pertanyaan Pemicu --</option>
+              <option value="">
+                {availableSourceQuestions.length === 0
+                  ? '-- Belum ada pertanyaan Pilihan Ganda / Checkbox / Dropdown --'
+                  : '-- Pilih Pertanyaan Pemicu --'}
+              </option>
               {availableSourceQuestions.map((q, idx) => (
                 <option key={q.uuid} value={q.uuid}>
                   {idx + 1}. {q.pertanyaan.replace(/<[^>]*>?/gm, '').substring(0, 70)}...

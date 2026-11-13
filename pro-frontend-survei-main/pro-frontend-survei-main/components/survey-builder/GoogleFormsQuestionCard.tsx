@@ -110,16 +110,17 @@ export function GoogleFormsQuestionCard({
   const [tempAlign, setTempAlign] = useState<'left' | 'center' | 'right'>('center');
 
   const [opsiList, setOpsiList] = useState<
-    { opsi_jawaban: string; ada_catatan: boolean }[]
+    { opsi_jawaban: string; ada_catatan: boolean; keterangan_catatan?: string }[]
   >(
     question.opsi_pertanyaan && question.opsi_pertanyaan.length > 0
       ? question.opsi_pertanyaan.map((o) => ({
           opsi_jawaban: o.opsi_jawaban,
           ada_catatan: o.ada_catatan,
+          keterangan_catatan: o.keterangan_catatan || '',
         }))
       : [
-          { opsi_jawaban: 'Opsi 1', ada_catatan: false },
-          { opsi_jawaban: 'Opsi 2', ada_catatan: false },
+          { opsi_jawaban: 'Opsi 1', ada_catatan: false, keterangan_catatan: '' },
+          { opsi_jawaban: 'Opsi 2', ada_catatan: false, keterangan_catatan: '' },
         ]
   );
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
@@ -138,6 +139,7 @@ export function GoogleFormsQuestionCard({
         question.opsi_pertanyaan.map((o) => ({
           opsi_jawaban: o.opsi_jawaban,
           ada_catatan: o.ada_catatan,
+          keterangan_catatan: o.keterangan_catatan || '',
         }))
       );
     }
@@ -184,7 +186,27 @@ export function GoogleFormsQuestionCard({
 
   const handleOptionChange = (idx: number, text: string) => {
     const updated = [...opsiList];
-    updated[idx].opsi_jawaban = text;
+    updated[idx] = { ...updated[idx], opsi_jawaban: text };
+    setOpsiList(updated);
+  };
+
+  const handleToggleOptionCustomField = (idx: number) => {
+    const updated = [...opsiList];
+    const nextAdaCatatan = !updated[idx].ada_catatan;
+    updated[idx] = {
+      ...updated[idx],
+      ada_catatan: nextAdaCatatan,
+      keterangan_catatan: nextAdaCatatan
+        ? updated[idx].keterangan_catatan || 'Tuliskan keterangan tambahan...'
+        : '',
+    };
+    setOpsiList(updated);
+    saveChanges({ opsiList: updated });
+  };
+
+  const handleOptionCustomPlaceholderChange = (idx: number, text: string) => {
+    const updated = [...opsiList];
+    updated[idx] = { ...updated[idx], keterangan_catatan: text };
     setOpsiList(updated);
   };
 
@@ -192,11 +214,15 @@ export function GoogleFormsQuestionCard({
     saveChanges();
   };
 
-  const handleAddOption = (defaultText?: string) => {
+  const handleAddOption = (defaultText?: string, withCustomField = false) => {
     const nextNum = opsiList.length + 1;
     const newOptions = [
       ...opsiList,
-      { opsi_jawaban: defaultText || `Opsi ${nextNum}`, ada_catatan: false },
+      {
+        opsi_jawaban: defaultText || `Opsi ${nextNum}`,
+        ada_catatan: withCustomField,
+        keterangan_catatan: withCustomField ? 'Sebutkan lainnya...' : '',
+      },
     ];
     setOpsiList(newOptions);
     saveChanges({ opsiList: newOptions });
@@ -450,39 +476,74 @@ export function GoogleFormsQuestionCard({
           <div className="pt-1">
             {/* Multiple Choice / Checkbox / Dropdown Option Editor */}
             {isChoiceType && (
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 {opsiList.map((opsi, idx) => (
-                  <div key={idx} className="flex items-center gap-2.5 group/opt">
-                    {jenis === 'CHECKBOX' || jenis === 'KOTAK_CENTANG' ? (
-                      <div className="w-4 h-4 rounded border border-slate-300 flex-shrink-0" />
-                    ) : (
-                      <div className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0" />
-                    )}
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center gap-2.5 group/opt">
+                      {jenis === 'CHECKBOX' || jenis === 'KOTAK_CENTANG' ? (
+                        <div className="w-4 h-4 rounded border border-slate-300 flex-shrink-0" />
+                      ) : jenis === 'DROPDOWN' ? (
+                        <span className="text-[11px] font-semibold text-slate-400 w-4 text-center flex-shrink-0">
+                          {idx + 1}.
+                        </span>
+                      ) : (
+                        <div className="w-4 h-4 rounded-full border border-slate-300 flex-shrink-0" />
+                      )}
 
-                    <input
-                      type="text"
-                      value={opsi.opsi_jawaban}
-                      onChange={(e) => handleOptionChange(idx, e.target.value)}
-                      onBlur={handleOptionBlur}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddOption();
-                        }
-                      }}
-                      placeholder={`Opsi ${idx + 1}`}
-                      className="flex-1 text-xs md:text-sm text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-[#0B5C9E] focus:outline-none py-1 bg-transparent transition-colors"
-                    />
+                      <input
+                        type="text"
+                        value={opsi.opsi_jawaban}
+                        onChange={(e) => handleOptionChange(idx, e.target.value)}
+                        onBlur={handleOptionBlur}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddOption();
+                          }
+                        }}
+                        placeholder={`Opsi ${idx + 1}`}
+                        className="flex-1 text-xs md:text-sm text-slate-800 border-b border-transparent hover:border-slate-300 focus:border-[#0B5C9E] focus:outline-none py-1 bg-transparent transition-colors"
+                      />
 
-                    {opsiList.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveOption(idx)}
-                        className="text-slate-300 hover:text-rose-600 p-1 transition-colors opacity-0 group-hover/opt:opacity-100 cursor-pointer"
-                        title="Hapus opsi"
+                        onClick={() => handleToggleOptionCustomField(idx)}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-semibold border transition-colors cursor-pointer shrink-0 ${
+                          opsi.ada_catatan
+                            ? 'bg-blue-50 text-[#0B5C9E] border-blue-200'
+                            : 'bg-white text-slate-400 border-slate-200 hover:text-slate-700 hover:border-slate-300 opacity-0 group-hover/opt:opacity-100'
+                        }`}
+                        title="Aktifkan input teks tambahan (Custom Field) saat opsi ini dipilih"
                       >
-                        <X className="w-3.5 h-3.5" />
+                        {opsi.ada_catatan ? 'Custom Field ✓' : '+ Custom Field'}
                       </button>
+
+                      {opsiList.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveOption(idx)}
+                          className="text-slate-300 hover:text-rose-600 p-1 transition-colors opacity-0 group-hover/opt:opacity-100 cursor-pointer"
+                          title="Hapus opsi"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {opsi.ada_catatan && (
+                      <div className="pl-6 flex items-center gap-2">
+                        <span className="text-[10px] text-slate-400 font-medium shrink-0">
+                          Label/Placeholder Isian:
+                        </span>
+                        <input
+                          type="text"
+                          value={opsi.keterangan_catatan || ''}
+                          onChange={(e) => handleOptionCustomPlaceholderChange(idx, e.target.value)}
+                          onBlur={handleOptionBlur}
+                          placeholder="Tuliskan keterangan tambahan..."
+                          className="flex-1 max-w-xs text-[11px] text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 focus:border-[#0B5C9E] focus:outline-none"
+                        />
+                      </div>
                     )}
                   </div>
                 ))}
@@ -500,10 +561,10 @@ export function GoogleFormsQuestionCard({
                   <span className="text-slate-300">atau</span>
                   <button
                     type="button"
-                    onClick={() => handleAddOption('Lainnya...')}
+                    onClick={() => handleAddOption('Lainnya...', true)}
                     className="text-slate-500 hover:text-[#0B5C9E] hover:underline cursor-pointer"
                   >
-                    Tambahkan &quot;Lainnya&quot;
+                    Tambahkan &quot;Lainnya&quot; (Custom Field)
                   </button>
                 </div>
               </div>

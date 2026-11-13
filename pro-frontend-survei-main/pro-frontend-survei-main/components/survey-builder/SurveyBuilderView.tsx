@@ -12,6 +12,7 @@ import {
   useSurveyInstruments,
   useSurveyBuilderMutations,
 } from '@/hooks/useSurveyBuilder';
+import { SurveyApiService } from '@/services/survey.service';
 import {
   ArrowLeft,
   Eye,
@@ -36,7 +37,7 @@ export function SurveyBuilderView({ survey: initialSurvey, detailSurveys: initia
 
   // TanStack Query
   const { data: survey = initialSurvey } = useSurveyDetail(surveyId, initialSurvey);
-  const { data: categories = initialCategories } = useSurveyInstruments(surveyId, initialCategories);
+  const { data: categories = initialCategories, refetch: refetchInstruments } = useSurveyInstruments(surveyId, initialCategories);
   const mutations = useSurveyBuilderMutations(surveyId);
 
   const [selectedCatIndex, setSelectedCatIndex] = useState<number>(0);
@@ -177,7 +178,21 @@ export function SurveyBuilderView({ survey: initialSurvey, detailSurveys: initia
   };
 
   const handleSaveRule = async (rule: any) => {
+    await SurveyApiService.createLogicRule(rule);
+    await refetchInstruments();
     toast.success('Aturan logika percabangan berhasil disimpan!');
+  };
+
+  const handleDeleteRule = async (ruleId: string) => {
+    await SurveyApiService.deleteLogicRule(ruleId);
+    const updated = await refetchInstruments();
+    if (logicTargetQuestion && updated.data) {
+      const refreshedQ = updated.data
+        .flatMap((c) => c.pertanyaan || [])
+        .find((q) => q.uuid === logicTargetQuestion.uuid);
+      if (refreshedQ) setLogicTargetQuestion(refreshedQ);
+    }
+    toast.info('Aturan logika percabangan dihapus.');
   };
 
   // Categories Handlers
@@ -451,6 +466,7 @@ export function SurveyBuilderView({ survey: initialSurvey, detailSurveys: initia
         allQuestions={allQuestions}
         allCategories={categories}
         onSaveRule={handleSaveRule}
+        onDeleteRule={handleDeleteRule}
       />
     </div>
   );

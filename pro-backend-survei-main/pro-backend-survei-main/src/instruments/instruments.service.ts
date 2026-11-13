@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { CreateInstrumentDto } from './dto/create-instrument.dto';
 import { UpdateInstrumentDto } from './dto/update-instrument.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -376,5 +376,61 @@ export class InstrumentsService {
     } catch (error) {
       new InternalServerErrorException(`Something went wrong: ${error.message}`);
     }
+  }
+
+  async createLogicRule(dto: {
+    id_target_pertanyaan: string;
+    id_source_pertanyaan: string;
+    id_opsi_pemicu?: string | null;
+    operator?: 'EQUALS' | 'NOT_EQUALS' | 'IS_NOT_EMPTY';
+    nilai_pemicu?: string;
+  }) {
+    if (!dto.id_target_pertanyaan || !dto.id_source_pertanyaan) {
+      throw new BadRequestException('Pertanyaan target dan pemicu wajib diisi.');
+    }
+    if (dto.id_target_pertanyaan === dto.id_source_pertanyaan) {
+      throw new BadRequestException('Pertanyaan pemicu dan target tidak boleh sama.');
+    }
+
+    const sourceQuestion = await this.prisma.pertanyaan.findUnique({
+      where: { uuid: dto.id_source_pertanyaan },
+    });
+    if (!sourceQuestion) {
+      throw new BadRequestException('Pertanyaan pemicu tidak ditemukan.');
+    }
+
+    const allowedBranchTypes = ['PILIHAN', 'PILIHAN_GANDA', 'CHECKBOX', 'KOTAK_CENTANG', 'DROPDOWN'];
+    if (!allowedBranchTypes.includes(sourceQuestion.jenis)) {
+      throw new BadRequestException(
+        'Percabangan logika hanya berlaku untuk pertanyaan Pilihan Ganda, Checkbox, dan Dropdown.'
+      );
+    }
+
+    const rule = await this.prisma.logic_pertanyaan.create({
+      data: {
+        uuid: this.uuid.generateUUID(),
+        id_target_pertanyaan: dto.id_target_pertanyaan,
+        id_source_pertanyaan: dto.id_source_pertanyaan,
+        id_opsi_pemicu: dto.id_opsi_pemicu || null,
+        operator: dto.operator || 'EQUALS',
+        nilai_pemicu: dto.nilai_pemicu || '',
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Aturan logika percabangan berhasil disimpan.',
+      data: rule,
+    };
+  }
+
+  async deleteLogicRule(ruleId: string) {
+    await this.prisma.logic_pertanyaan.delete({
+      where: { uuid: ruleId },
+    });
+    return {
+      success: true,
+      message: 'Aturan logika percabangan berhasil dihapus.',
+    };
   }
 }

@@ -554,29 +554,39 @@ export function ModernFieldSurveyRunner({
                                 currentAns?.id_opsi_jawaban === opt.uuid);
 
                             return (
-                              <label
-                                key={opt.uuid}
-                                className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                  isChecked
-                                    ? 'border-[#0B5C9E] bg-blue-50/60 ring-2 ring-blue-100 font-semibold text-[#0B5C9E]'
-                                    : 'border-slate-200 hover:border-slate-300 text-slate-800 bg-white hover:bg-slate-50/50'
-                                }`}
-                              >
-                                <input
-                                  type="radio"
-                                  name={`q-${q.uuid}`}
-                                  value={opt.opsi_jawaban}
-                                  checked={isChecked}
-                                  onChange={() =>
-                                    handleAnswerChange(q.uuid, {
-                                      id_opsi_jawaban: opt.uuid,
-                                      text: opt.opsi_jawaban,
-                                    })
-                                  }
-                                  className="accent-[#0B5C9E] w-4 h-4"
-                                />
-                                <span className="text-xs">{opt.opsi_jawaban}</span>
-                              </label>
+                              <div key={opt.uuid} className="space-y-2">
+                                <label
+                                  className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                    isChecked
+                                      ? 'border-[#0B5C9E] bg-blue-50/60 ring-2 ring-blue-100 font-semibold text-[#0B5C9E]'
+                                      : 'border-slate-200 hover:border-slate-300 text-slate-800 bg-white hover:bg-slate-50/50'
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name={`q-${q.uuid}`}
+                                    value={opt.opsi_jawaban}
+                                    checked={isChecked}
+                                    onChange={() =>
+                                      handleAnswerChange(q.uuid, {
+                                        id_opsi_jawaban: opt.uuid,
+                                        text: opt.opsi_jawaban,
+                                      })
+                                    }
+                                    className="accent-[#0B5C9E] w-4 h-4"
+                                  />
+                                  <span className="text-xs">{opt.opsi_jawaban}</span>
+                                </label>
+                                {isChecked && opt.ada_catatan && (
+                                  <input
+                                    type="text"
+                                    value={currentNote}
+                                    onChange={(e) => handleNoteChange(q.uuid, e.target.value)}
+                                    placeholder={opt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                                    className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
+                                  />
+                                )}
+                              </div>
                             );
                           })}
                         </div>
@@ -591,24 +601,34 @@ export function ModernFieldSurveyRunner({
                               currentAns.includes(opt.opsi_jawaban);
 
                             return (
-                              <label
-                                key={opt.uuid}
-                                className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                  isChecked
-                                    ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-100 font-semibold text-emerald-900'
-                                    : 'border-slate-200 hover:border-slate-300 text-slate-800 bg-white hover:bg-slate-50/50'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={() =>
-                                    handleCheckboxToggle(q.uuid, opt.opsi_jawaban)
-                                  }
-                                  className="accent-emerald-600 rounded w-4 h-4"
-                                />
-                                <span className="text-xs">{opt.opsi_jawaban}</span>
-                              </label>
+                              <div key={opt.uuid} className="space-y-2">
+                                <label
+                                  className={`flex items-center gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                    isChecked
+                                      ? 'border-emerald-600 bg-emerald-50/60 ring-2 ring-emerald-100 font-semibold text-emerald-900'
+                                      : 'border-slate-200 hover:border-slate-300 text-slate-800 bg-white hover:bg-slate-50/50'
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={() =>
+                                      handleCheckboxToggle(q.uuid, opt.opsi_jawaban)
+                                    }
+                                    className="accent-emerald-600 rounded w-4 h-4"
+                                  />
+                                  <span className="text-xs">{opt.opsi_jawaban}</span>
+                                </label>
+                                {isChecked && opt.ada_catatan && (
+                                  <input
+                                    type="text"
+                                    value={currentNote}
+                                    onChange={(e) => handleNoteChange(q.uuid, e.target.value)}
+                                    placeholder={opt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                                    className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                                  />
+                                )}
+                              </div>
                             );
                           })}
                         </div>
@@ -616,30 +636,51 @@ export function ModernFieldSurveyRunner({
 
                       {/* Dropdown */}
                       {q.jenis === 'DROPDOWN' && (
-                        <select
-                          value={
-                            typeof currentAns === 'object'
-                              ? currentAns?.text || ''
-                              : currentAns || ''
-                          }
-                          onChange={(e) => {
-                            const opt = q.opsi_pertanyaan?.find(
-                              (o) => o.opsi_jawaban === e.target.value
+                        <div className="space-y-2">
+                          <select
+                            value={
+                              typeof currentAns === 'object'
+                                ? currentAns?.text || ''
+                                : currentAns || ''
+                            }
+                            onChange={(e) => {
+                              const opt = q.opsi_pertanyaan?.find(
+                                (o) => o.opsi_jawaban === e.target.value
+                              );
+                              handleAnswerChange(q.uuid, {
+                                id_opsi_jawaban: opt?.uuid || '',
+                                text: e.target.value,
+                              });
+                            }}
+                            className="w-full text-xs p-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
+                          >
+                            <option value="">-- Pilih salah satu opsi --</option>
+                            {q.opsi_pertanyaan?.map((opt) => (
+                              <option key={opt.uuid} value={opt.opsi_jawaban}>
+                                {opt.opsi_jawaban}
+                              </option>
+                            ))}
+                          </select>
+                          {(() => {
+                            const selectedText =
+                              typeof currentAns === 'object' ? currentAns?.text || '' : currentAns || '';
+                            const selectedOpt = q.opsi_pertanyaan?.find(
+                              (o) => o.opsi_jawaban === selectedText
                             );
-                            handleAnswerChange(q.uuid, {
-                              id_opsi_jawaban: opt?.uuid || '',
-                              text: e.target.value,
-                            });
-                          }}
-                          className="w-full text-xs p-3 rounded-xl border border-slate-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
-                        >
-                          <option value="">-- Pilih salah satu opsi --</option>
-                          {q.opsi_pertanyaan?.map((opt) => (
-                            <option key={opt.uuid} value={opt.opsi_jawaban}>
-                              {opt.opsi_jawaban}
-                            </option>
-                          ))}
-                        </select>
+                            if (selectedOpt?.ada_catatan) {
+                              return (
+                                <input
+                                  type="text"
+                                  value={currentNote}
+                                  onChange={(e) => handleNoteChange(q.uuid, e.target.value)}
+                                  placeholder={selectedOpt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                                  className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
+                                />
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       )}
 
                       {/* Isian Singkat */}

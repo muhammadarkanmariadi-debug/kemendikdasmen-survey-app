@@ -1,41 +1,34 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import {
   HasilSurvey,
   IKategori,
   IResponden,
   IDocument,
 } from '@/app/types';
-import { BASE_FILE_DOCUMENTATION, BASE_FILE_DOCUMENTS } from '@/global';
+import { BASE_FILE_DOCUMENTATION } from '@/global';
 import {
   Printer,
   X,
   Sliders,
-  CheckCircle2,
-  Building2,
-  FileText,
   MapPin,
-  Calendar,
-  Check,
+  Settings,
   ChevronDown,
   ChevronUp,
-  Download,
-  ShieldCheck,
-  Eye,
-  Settings,
 } from 'lucide-react';
+import { KopSuratCanvas } from '@/components/document/KopSuratCanvas';
+import { KopSuratControls } from '@/components/document/KopSuratControls';
 
 export interface OfficialPrintConfig {
-  kementerian: string;
-  ditjen: string;
-  direktorat: string;
-  alamat: string;
+  kopImageUrl?: string;
+  kopScale?: number;
+  kopX?: number;
+  kopY?: number;
+  kopAlign?: 'left' | 'center' | 'right' | 'custom';
+  kopShowDivider?: boolean;
   nomorSurat: string;
   judulDokumen: string;
-  showLogo: boolean;
-  logoType: 'tutwuri' | 'kemendikbud';
   showIdentity: boolean;
   showMetrics: boolean;
   showQuestions: boolean;
@@ -84,15 +77,14 @@ export function OfficialPrintDocumentModal({
 }: OfficialPrintDocumentModalProps) {
   // Config state for Kop Surat & Document Structure (can be customized by Admin)
   const [config, setConfig] = useState<OfficialPrintConfig>({
-    kementerian: 'KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI',
-    ditjen: 'DIREKTORAT JENDERAL PENDIDIKAN VOKASI',
-    direktorat: 'DIREKTORAT SEKOLAH MENENGAH KEJURUAN',
-    alamat:
-      'Kompleks Kemendikbudristek Gedung E Lantai 12-13, Jalan Jenderal Sudirman, Senayan, Jakarta Pusat 10270 | Laman: smk.kemdikbud.go.id | Pos-el: survei.smk@kemdikbud.go.id',
+    kopImageUrl: '',
+    kopScale: 100,
+    kopX: 0,
+    kopY: 0,
+    kopAlign: 'center',
+    kopShowDivider: true,
     nomorSurat: `BA.SURV/${new Date().getFullYear()}/${submission.uuid.substring(0, 8).toUpperCase()}`,
     judulDokumen: 'BERITA ACARA & LEMBAR VERIFIKASI HASIL SURVEI LAPANGAN',
-    showLogo: true,
-    logoType: 'tutwuri',
     showIdentity: true,
     showMetrics: true,
     showQuestions: true,
@@ -196,11 +188,6 @@ export function OfficialPrintDocumentModal({
   const handlePrint = () => {
     window.print();
   };
-
-  const logoSrc =
-    config.logoType === 'tutwuri'
-      ? '/images/tut wuri handayani.jpeg'
-      : '/images/logo_jenama_primer.png';
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col bg-slate-900/80 backdrop-blur-sm overflow-hidden">
@@ -312,91 +299,36 @@ export function OfficialPrintDocumentModal({
             <div className="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
               {activeSettingsTab === 'KOP' ? (
                 <>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Kementerian / Lembaga
-                    </label>
-                    <input
-                      type="text"
-                      value={config.kementerian}
-                      onChange={(e) => setConfig({ ...config, kementerian: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none"
-                    />
-                  </div>
+                  <KopSuratControls
+                    layout={config}
+                    onChange={(updates) => setConfig((prev) => ({ ...prev, ...updates }))}
+                  />
 
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Direktorat Jenderal / Eselon I
-                    </label>
-                    <input
-                      type="text"
-                      value={config.ditjen}
-                      onChange={(e) => setConfig({ ...config, ditjen: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Direktorat / Satuan Kerja
-                    </label>
-                    <input
-                      type="text"
-                      value={config.direktorat}
-                      onChange={(e) => setConfig({ ...config, direktorat: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Alamat & Kontak Kedinasan
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={config.alamat}
-                      onChange={(e) => setConfig({ ...config, alamat: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none leading-relaxed"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      Nomor Berita Acara / Registrasi
-                    </label>
-                    <input
-                      type="text"
-                      value={config.nomorSurat}
-                      onChange={(e) => setConfig({ ...config, nomorSurat: e.target.value })}
-                      className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none font-mono"
-                    />
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-slate-700">Tampilkan Logo Kop</span>
-                    <input
-                      type="checkbox"
-                      checked={config.showLogo}
-                      onChange={(e) => setConfig({ ...config, showLogo: e.target.checked })}
-                      className="rounded border-slate-300 text-[#0B5C9E] focus:ring-[#0B5C9E]"
-                    />
-                  </div>
-
-                  {config.showLogo && (
+                  <div className="pt-3 border-t border-slate-100 space-y-3">
                     <div>
                       <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                        Pilihan Lambang
+                        Judul Resmi Dokumen
                       </label>
-                      <select
-                        value={config.logoType}
-                        onChange={(e) => setConfig({ ...config, logoType: e.target.value as any })}
-                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-[#0B5C9E] outline-none"
-                      >
-                        <option value="tutwuri">Tut Wuri Handayani (Resmi Pendidikan)</option>
-                        <option value="kemendikbud">Jenama Primer Kemendikbudristek</option>
-                      </select>
+                      <input
+                        type="text"
+                        value={config.judulDokumen}
+                        onChange={(e) => setConfig({ ...config, judulDokumen: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none"
+                      />
                     </div>
-                  )}
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        Nomor Berita Acara / Registrasi
+                      </label>
+                      <input
+                        type="text"
+                        value={config.nomorSurat}
+                        onChange={(e) => setConfig({ ...config, nomorSurat: e.target.value })}
+                        className="w-full px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-1 focus:ring-slate-900 outline-none font-mono"
+                      />
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>
@@ -515,97 +447,54 @@ export function OfficialPrintDocumentModal({
           id="official-print-document"
           className="w-full max-w-[210mm] min-h-[297mm] bg-white text-black shadow-2xl p-8 sm:p-12 font-serif text-[12pt] leading-normal print:shadow-none print:m-0 print:p-0 print:w-full print:max-w-none print:text-black"
         >
-          {/* ================= KOP SURAT RESMI KEDINASAN ================= */}
-          <div className="border-b-[3px] border-black pb-2 mb-1 relative">
-            <div className="flex items-center justify-between gap-4">
-              {config.showLogo && (
-                <div className="w-24 shrink-0 flex items-center justify-center">
-                  <Image
-                    src={logoSrc}
-                    width={90}
-                    height={90}
-                    alt="Logo Kedinasan"
-                    className="object-contain max-h-[85px] w-auto"
-                    priority
-                  />
-                </div>
-              )}
-
-              <div className="flex-1 text-center font-sans tracking-wide">
-                <h3 className="text-[12pt] font-semibold text-black uppercase tracking-wider leading-tight">
-                  {config.kementerian}
-                </h3>
-                <h2 className="text-[14pt] font-bold text-black uppercase tracking-wide leading-tight mt-0.5">
-                  {config.ditjen}
-                </h2>
-                <h1 className="text-[16pt] font-extrabold text-black uppercase tracking-wide leading-tight mt-0.5">
-                  {config.direktorat}
-                </h1>
-                <p className="text-[8.5pt] font-normal text-slate-800 leading-snug mt-1.5 font-sans">
-                  {config.alamat}
-                </p>
-              </div>
-
-              {config.showLogo && (
-                <div className="w-24 shrink-0 flex items-center justify-center">
-                  <Image
-                    src="/images/logodirsmk.png"
-                    width={85}
-                    height={85}
-                    alt="Logo Direktorat SMK"
-                    className="object-contain max-h-[80px] w-auto"
-                    onError={(e: any) => {
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          {/* Double line separator (Garis ganda tebal tipis khas berkas negara) */}
-          <div className="border-b-[1px] border-black mb-6"></div>
+          {/* ================= KOP SURAT RESMI (IMAGE) ================= */}
+          <KopSuratCanvas
+            layout={config}
+            editable={isSettingsOpen && activeSettingsTab === 'KOP'}
+            onChange={(updates) => setConfig((prev) => ({ ...prev, ...updates }))}
+          />
 
           {/* ================= JUDUL DOKUMEN & NOMOR BERITA ACARA ================= */}
           <div className="text-center mb-6">
-            <h2 className="text-[13pt] font-bold uppercase tracking-wider underline text-black">
+            <h2 className="text-[12.5pt] font-bold uppercase tracking-wider underline text-black">
               {config.judulDokumen}
             </h2>
-            <p className="text-[10pt] font-sans text-slate-800 mt-1">
+            <p className="text-[9.5pt] font-sans text-black mt-1">
               Nomor: <span className="font-semibold">{config.nomorSurat}</span>
             </p>
-            <p className="text-[11pt] font-semibold text-slate-900 mt-1">
+            <p className="text-[10.5pt] font-semibold text-black mt-0.5">
               Survei: &ldquo;{submission.survey?.nama_survey || 'Kuesioner Direktorat SMK'}&rdquo;
             </p>
           </div>
 
           {/* ================= BAGIAN I: IDENTITAS SATUAN PENDIDIKAN & RESPONDEN ================= */}
           {config.showIdentity && (
-            <div className="mb-6 break-inside-avoid text-[10.5pt] font-sans">
-              <div className="bg-slate-100/80 px-3 py-1 font-bold text-[10.5pt] uppercase border-l-4 border-[#0B5C9E] text-slate-900 mb-2">
-                I. IDENTITAS SATUAN PENDIDIKAN & RESPONDEN
+            <div className="mb-6 break-inside-avoid text-[10pt] font-sans">
+              <div className="pb-1 font-bold text-[10pt] uppercase border-b border-black text-black mb-2 tracking-wide">
+                I. IDENTITAS SATUAN PENDIDIKAN &amp; RESPONDEN
               </div>
 
-              <table className="w-full border-collapse text-[10pt]">
+              <table className="w-full border-collapse text-[9.5pt]">
                 <tbody>
-                  <tr className="border-b border-slate-200">
-                    <td className="w-48 py-1.5 font-semibold text-slate-700">Nama Satuan Pendidikan</td>
-                    <td className="w-4 py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-bold text-slate-900 uppercase">{namaInstansi}</td>
+                  <tr className="border-b border-neutral-300">
+                    <td className="w-52 py-1.5 font-medium text-black">Nama Satuan Pendidikan</td>
+                    <td className="w-4 py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-bold text-black uppercase">{namaInstansi}</td>
                   </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="py-1.5 font-semibold text-slate-700">Nomor Pokok Sekolah Nasional (NPSN)</td>
-                    <td className="py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-semibold text-slate-900 font-mono">{npsn}</td>
+                  <tr className="border-b border-neutral-300">
+                    <td className="py-1.5 font-medium text-black">Nomor Pokok Sekolah Nasional (NPSN)</td>
+                    <td className="py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-semibold text-black font-mono">{npsn}</td>
                   </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="py-1.5 font-semibold text-slate-700">Nama Responden Terverifikasi</td>
-                    <td className="py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-bold text-slate-900">{namaResponden}</td>
+                  <tr className="border-b border-neutral-300">
+                    <td className="py-1.5 font-medium text-black">Nama Responden Terverifikasi</td>
+                    <td className="py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-bold text-black">{namaResponden}</td>
                   </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="py-1.5 font-semibold text-slate-700">Kelompok / Peran Responden</td>
-                    <td className="py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-semibold text-slate-900">
+                  <tr className="border-b border-neutral-300">
+                    <td className="py-1.5 font-medium text-black">Kelompok / Peran Responden</td>
+                    <td className="py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-medium text-black">
                       {(typeof submission.responden?.jenis_responden === 'string'
                         ? submission.responden.jenis_responden
                         : (submission.responden?.jenis_responden as any)?.jenis) ||
@@ -613,15 +502,15 @@ export function OfficialPrintDocumentModal({
                         'Responden Satdik'}
                     </td>
                   </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="py-1.5 font-semibold text-slate-700">Petugas Surveyor Lapangan</td>
-                    <td className="py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-semibold text-slate-900">{surveyorName}</td>
+                  <tr className="border-b border-neutral-300">
+                    <td className="py-1.5 font-medium text-black">Petugas Surveyor Lapangan</td>
+                    <td className="py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-medium text-black">{surveyorName}</td>
                   </tr>
-                  <tr>
-                    <td className="py-1.5 font-semibold text-slate-700">Waktu & Tanggal Verifikasi</td>
-                    <td className="py-1.5 font-bold text-center">:</td>
-                    <td className="py-1.5 font-semibold text-slate-900">{verifiedDate}</td>
+                  <tr className="border-b border-neutral-300">
+                    <td className="py-1.5 font-medium text-black">Waktu &amp; Tanggal Verifikasi</td>
+                    <td className="py-1.5 text-center text-black">:</td>
+                    <td className="py-1.5 font-medium text-black">{verifiedDate}</td>
                   </tr>
                 </tbody>
               </table>
@@ -630,64 +519,61 @@ export function OfficialPrintDocumentModal({
 
           {/* ================= BAGIAN II: RINGKASAN METRIK PENGISIAN ================= */}
           {config.showMetrics && (
-            <div className="mb-6 break-inside-avoid text-[10pt] font-sans">
-              <div className="bg-slate-100/80 px-3 py-1 font-bold text-[10.5pt] uppercase border-l-4 border-[#0B5C9E] text-slate-900 mb-2">
+            <div className="mb-6 break-inside-avoid text-[9.5pt] font-sans">
+              <div className="pb-1 font-bold text-[10pt] uppercase border-b border-black text-black mb-2 tracking-wide">
                 II. RINGKASAN REKAPITULASI LAPANGAN
               </div>
 
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="border border-slate-300 rounded p-2 bg-slate-50/50">
-                  <div className="text-[9pt] text-slate-600 font-semibold">Total Butir Instrumen</div>
-                  <div className="text-[13pt] font-extrabold text-[#0B5C9E]">
-                    {submission.jawaban_survey?.length || 0} Butir
-                  </div>
-                </div>
-
-                <div className="border border-slate-300 rounded p-2 bg-slate-50/50">
-                  <div className="text-[9pt] text-slate-600 font-semibold">Status Pengisian</div>
-                  <div className="text-[13pt] font-extrabold text-emerald-700">Lengkap 100%</div>
-                </div>
-
-                <div className="border border-slate-300 rounded p-2 bg-slate-50/50">
-                  <div className="text-[9pt] text-slate-600 font-semibold">Foto Dokumentasi</div>
-                  <div className="text-[13pt] font-extrabold text-slate-900">
-                    {documentations.length} Foto
-                  </div>
-                </div>
-
-                <div className="border border-slate-300 rounded p-2 bg-slate-50/50">
-                  <div className="text-[9pt] text-slate-600 font-semibold">Dokumen Pendukung</div>
-                  <div className="text-[13pt] font-extrabold text-slate-900">
-                    {documents.length} Berkas
-                  </div>
-                </div>
-              </div>
+              <table className="w-full border border-black border-collapse text-center text-[9.5pt]">
+                <thead>
+                  <tr className="border-b border-black bg-neutral-100">
+                    <th className="py-1.5 px-2 border-r border-black font-semibold text-black">Total Butir Instrumen</th>
+                    <th className="py-1.5 px-2 border-r border-black font-semibold text-black">Status Pengisian</th>
+                    <th className="py-1.5 px-2 border-r border-black font-semibold text-black">Foto Dokumentasi</th>
+                    <th className="py-1.5 px-2 font-semibold text-black">Dokumen Pendukung</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="py-2 px-2 border-r border-black font-bold text-black">
+                      {submission.jawaban_survey?.length || 0} Butir
+                    </td>
+                    <td className="py-2 px-2 border-r border-black font-bold text-black">Lengkap 100%</td>
+                    <td className="py-2 px-2 border-r border-black font-bold text-black">
+                      {documentations.length} Foto
+                    </td>
+                    <td className="py-2 px-2 font-bold text-black">
+                      {documents.length} Berkas
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           )}
 
           {/* ================= BAGIAN III: LEMBAR INSTRUMEN DAN HASIL VERIFIKASI ================= */}
           {config.showQuestions && (
-            <div className="mb-6 text-[10pt] font-sans">
-              <div className="bg-slate-100/80 px-3 py-1 font-bold text-[10.5pt] uppercase border-l-4 border-[#0B5C9E] text-slate-900 mb-3 break-after-avoid">
+            <div className="mb-6 text-[9.5pt] font-sans">
+              <div className="pb-1 font-bold text-[10pt] uppercase border-b border-black text-black mb-3 tracking-wide break-after-avoid">
                 III. LEMBAR JAWABAN INSTRUMEN TERVERIFIKASI
               </div>
 
               <div className="space-y-4">
                 {filteredCategories.map((cat, catIdx) => (
                   <div key={cat.uuid || catIdx} className="break-inside-avoid">
-                    <div className="font-bold text-[10.5pt] text-slate-900 mb-1 pb-1 border-b border-slate-400">
+                    <div className="font-bold text-[9.5pt] text-black mb-1.5">
                       Bagian {catIdx + 1}: {cat.nama_kategori}
                     </div>
 
-                    <table className="w-full border border-slate-400 border-collapse text-[9.5pt]">
+                    <table className="w-full border border-black border-collapse text-[9pt]">
                       <thead>
-                        <tr className="bg-slate-100 text-slate-800 border-b border-slate-400">
-                          <th className="w-8 py-1.5 px-2 text-center border-r border-slate-400 font-bold">No</th>
-                          <th className="py-1.5 px-3 text-left border-r border-slate-400 font-bold">
+                        <tr className="bg-neutral-100 text-black border-b border-black">
+                          <th className="w-9 py-1.5 px-2 text-center border-r border-black font-bold">No</th>
+                          <th className="py-1.5 px-3 text-left border-r border-black font-bold">
                             Butir Pertanyaan Instrumen
                           </th>
                           <th className="w-64 py-1.5 px-3 text-left font-bold">
-                            Jawaban & Pilihan Responden
+                            Jawaban &amp; Pilihan Responden
                           </th>
                         </tr>
                       </thead>
@@ -697,24 +583,24 @@ export function OfficialPrintDocumentModal({
                           return (
                             <tr
                               key={q.uuid || qIdx}
-                              className={`border-b border-slate-300 ${qIdx % 2 === 1 ? 'bg-slate-50/60' : 'bg-white'}`}
+                              className="border-b border-neutral-400 bg-white"
                             >
-                              <td className="py-2 px-2 text-center align-top border-r border-slate-300 font-semibold">
+                              <td className="py-2 px-2 text-center align-top border-r border-neutral-400 font-semibold text-black">
                                 {qIdx + 1}
                               </td>
-                              <td className="py-2 px-3 align-top border-r border-slate-300">
+                              <td className="py-2 px-3 align-top border-r border-neutral-400">
                                 <div
-                                  className="font-medium text-slate-900 leading-snug"
+                                  className="font-medium text-black leading-snug"
                                   dangerouslySetInnerHTML={{ __html: q.pertanyaan }}
                                 />
                                 {q.deskripsi_bantuan && (
-                                  <div className="text-[8.5pt] text-slate-500 italic mt-0.5">
+                                  <div className="text-[8pt] text-neutral-600 italic mt-0.5">
                                     {q.deskripsi_bantuan}
                                   </div>
                                 )}
                               </td>
                               <td className="py-2 px-3 align-top">
-                                {['PILIHAN', 'CHECKBOX', 'PILIHAN_GANDA', 'KOTAK_CENTANG'].includes(q.jenis) &&
+                                {['PILIHAN', 'CHECKBOX', 'PILIHAN_GANDA', 'KOTAK_CENTANG', 'DROPDOWN'].includes(q.jenis) &&
                                 q.opsi_pertanyaan &&
                                 q.opsi_pertanyaan.length > 0 ? (
                                   <div className="space-y-1">
@@ -724,11 +610,11 @@ export function OfficialPrintDocumentModal({
                                         <div
                                           key={opt.uuid}
                                           className={`flex items-start gap-1.5 leading-tight ${
-                                            checked ? 'font-bold text-[#0B5C9E]' : 'text-slate-500'
+                                            checked ? 'font-bold text-black' : 'text-neutral-500'
                                           }`}
                                         >
-                                          <span className="font-mono text-sm leading-none shrink-0">
-                                            {checked ? '[ ✓ ]' : '[   ]'}
+                                          <span className="font-mono text-xs leading-none shrink-0 mt-0.5">
+                                            {checked ? '[✓]' : '[ ]'}
                                           </span>
                                           <span className="text-[9pt]">{opt.opsi_jawaban}</span>
                                         </div>
@@ -736,14 +622,14 @@ export function OfficialPrintDocumentModal({
                                     })}
                                   </div>
                                 ) : (
-                                  <div className="font-semibold text-slate-900 text-[9pt] whitespace-pre-wrap">
+                                  <div className="font-semibold text-black text-[9pt] whitespace-pre-wrap">
                                     {getAnswerText(q.uuid)}
                                   </div>
                                 )}
 
                                 {config.showNotes && note && (
-                                  <div className="mt-1.5 p-1.5 rounded bg-amber-50/80 border border-amber-200 text-[8.5pt] text-amber-900">
-                                    <span className="font-bold">Catatan Responden:</span> {note}
+                                  <div className="mt-1.5 pt-1 border-t border-neutral-300 text-[8pt] text-black">
+                                    <span className="font-bold">Keterangan:</span> {note}
                                   </div>
                                 )}
                               </td>
@@ -760,8 +646,8 @@ export function OfficialPrintDocumentModal({
 
           {/* ================= BAGIAN IV: LAMPIRAN FOTO DOKUMENTASI & BUKTI FISIK ================= */}
           {config.showDocumentations && documentations.length > 0 && (
-            <div className="mb-6 break-inside-avoid text-[10pt] font-sans">
-              <div className="bg-slate-100/80 px-3 py-1 font-bold text-[10.5pt] uppercase border-l-4 border-[#0B5C9E] text-slate-900 mb-3">
+            <div className="mb-6 break-inside-avoid text-[9.5pt] font-sans">
+              <div className="pb-1 font-bold text-[10pt] uppercase border-b border-black text-black mb-3 tracking-wide">
                 IV. LAMPIRAN BUKTI FOTO DOKUMENTASI LAPANGAN
               </div>
 
@@ -775,27 +661,26 @@ export function OfficialPrintDocumentModal({
                   return (
                     <div
                       key={doc.id || docIdx}
-                      className="border border-slate-300 rounded p-1.5 bg-slate-50 text-center break-inside-avoid"
+                      className="border border-black p-1.5 bg-white text-center break-inside-avoid"
                     >
-                      <div className="w-full h-32 bg-slate-200 rounded relative overflow-hidden flex items-center justify-center">
+                      <div className="w-full h-32 bg-neutral-100 relative overflow-hidden flex items-center justify-center">
                         {docUrl ? (
                           <img
                             src={docUrl}
                             alt={doc.nama_file || `Dokumentasi ${docIdx + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover grayscale"
                             onError={(e: any) => {
-                              e.target.src = '/images/tut wuri handayani.jpeg';
-                              e.target.className = 'w-16 h-16 object-contain opacity-50 m-auto';
+                              e.target.style.display = 'none';
                             }}
                           />
                         ) : (
-                          <span className="text-slate-400 text-xs">Foto Tidak Tersedia</span>
+                          <span className="text-neutral-500 text-xs">Foto Tidak Tersedia</span>
                         )}
                       </div>
-                      <div className="mt-1 font-semibold text-[8.5pt] text-slate-800 truncate">
+                      <div className="mt-1 font-semibold text-[8.5pt] text-black truncate">
                         {doc.nama_file || `Foto Kegiatan #${docIdx + 1}`}
                       </div>
-                      <div className="text-[7.5pt] text-slate-500">
+                      <div className="text-[7.5pt] text-neutral-600">
                         {doc.createdAt ? new Date(doc.createdAt).toLocaleDateString('id-ID') : 'Terverifikasi'}
                       </div>
                     </div>
@@ -807,24 +692,24 @@ export function OfficialPrintDocumentModal({
 
           {/* ================= BAGIAN V: PENGESAHAN, GEOTAG GPS & TANDA TANGAN DIGITAL ================= */}
           {config.showSignatures && (
-            <div className="mt-8 break-inside-avoid text-[10pt] font-sans">
-              <div className="bg-slate-100/80 px-3 py-1 font-bold text-[10.5pt] uppercase border-l-4 border-[#0B5C9E] text-slate-900 mb-3">
+            <div className="mt-8 break-inside-avoid text-[9.5pt] font-sans">
+              <div className="pb-1 font-bold text-[10pt] uppercase border-b border-black text-black mb-3 tracking-wide">
                 V. PENGESAHAN DAN INTEGRITAS DATA LAPANGAN
               </div>
 
               {/* GPS Geotag Info */}
               {config.showGps && (
-                <div className="mb-4 p-2.5 rounded border border-slate-300 bg-slate-50 flex items-center justify-between text-[9pt]">
+                <div className="mb-4 p-2 border border-black bg-white flex items-center justify-between text-[8.5pt]">
                   <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-[#0B5C9E] shrink-0" />
+                    <MapPin className="w-3.5 h-3.5 text-black shrink-0" />
                     <div>
-                      <span className="font-bold text-slate-900">Geotagging Titik Lokasi Verifikasi:</span>
-                      <span className="text-slate-700 ml-1">
+                      <span className="font-bold text-black">Geotagging Titik Lokasi Verifikasi:</span>
+                      <span className="text-black ml-1">
                         Lat: -7.250445, Long: 112.768845 (Surabaya, Jawa Timur) &bull; Akurasi: &plusmn; 4 meter
                       </span>
                     </div>
                   </div>
-                  <span className="text-[8pt] font-bold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  <span className="text-[8pt] font-bold uppercase px-2 py-0.5 border border-black text-black">
                     GPS Terverifikasi
                   </span>
                 </div>
@@ -832,7 +717,7 @@ export function OfficialPrintDocumentModal({
 
               {/* Disclaimer / Catatan Verifikator */}
               {config.catatanPetugas && (
-                <div className="mb-6 p-2.5 rounded border border-slate-200 bg-white text-[8.5pt] text-slate-700 italic">
+                <div className="mb-6 p-2.5 border border-neutral-400 bg-white text-[8.5pt] text-black italic">
                   &ldquo;{config.catatanPetugas}&rdquo;
                 </div>
               )}
@@ -841,30 +726,29 @@ export function OfficialPrintDocumentModal({
               <div className="grid grid-cols-2 gap-8 text-center mt-6">
                 {/* Petugas Surveyor Column */}
                 <div className="flex flex-col items-center">
-                  <p className="text-[9.5pt] text-slate-800">Mengetahui / Memverifikasi,</p>
-                  <p className="text-[10pt] font-bold text-slate-900">Petugas Surveyor Lapangan</p>
+                  <p className="text-[9.5pt] text-black">Mengetahui / Memverifikasi,</p>
+                  <p className="text-[9.5pt] font-bold text-black">Petugas Surveyor Lapangan</p>
 
-                  <div className="my-2 w-48 h-24 border border-dashed border-slate-300 rounded bg-slate-50/50 flex flex-col items-center justify-center p-1 relative">
-                    <div className="flex items-center gap-1 text-[9pt] font-bold text-emerald-700">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>TERVERIFIKASI DIGITAL</span>
+                  <div className="my-2 w-48 h-24 border border-neutral-400 bg-white flex flex-col items-center justify-center p-1 relative">
+                    <div className="text-[8.5pt] font-bold text-black uppercase tracking-wide">
+                      TERVERIFIKASI DIGITAL
                     </div>
-                    <span className="text-[7.5pt] text-slate-500 font-mono mt-0.5">
+                    <span className="text-[7.5pt] text-neutral-700 font-mono mt-0.5">
                       HASH: {submission.uuid.substring(0, 16)}
                     </span>
-                    <span className="text-[7.5pt] text-slate-400 mt-0.5">{verifiedDate}</span>
+                    <span className="text-[7.5pt] text-neutral-600 mt-0.5">{verifiedDate}</span>
                   </div>
 
-                  <p className="text-[10pt] font-bold text-slate-900 underline mt-1">{surveyorName}</p>
-                  <p className="text-[8.5pt] text-slate-600">Tim Penjaminan Mutu SMK</p>
+                  <p className="text-[9.5pt] font-bold text-black underline mt-1">{surveyorName}</p>
+                  <p className="text-[8.5pt] text-neutral-700">Tim Penjaminan Mutu SMK</p>
                 </div>
 
                 {/* Responden Satdik Column */}
                 <div className="flex flex-col items-center">
-                  <p className="text-[9.5pt] text-slate-800">Satuan Pendidikan Terkait,</p>
-                  <p className="text-[10pt] font-bold text-slate-900">Responden Satuan Pendidikan</p>
+                  <p className="text-[9.5pt] text-black">Satuan Pendidikan Terkait,</p>
+                  <p className="text-[9.5pt] font-bold text-black">Responden Satuan Pendidikan</p>
 
-                  <div className="my-2 w-48 h-24 border border-dashed border-slate-300 rounded bg-slate-50/50 flex flex-col items-center justify-center p-1 relative">
+                  <div className="my-2 w-48 h-24 border border-neutral-400 bg-white flex flex-col items-center justify-center p-1 relative">
                     {(() => {
                       const sigUrl = Array.isArray(submission.tanda_tangan_responden)
                         ? submission.tanda_tangan_responden[0]?.tanda_tangan
@@ -876,30 +760,29 @@ export function OfficialPrintDocumentModal({
                           <img
                             src={sigUrl}
                             alt="Tanda Tangan Responden"
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-contain grayscale"
                           />
                         );
                       }
                       return (
                         <>
-                          <div className="flex items-center gap-1 text-[9pt] font-bold text-emerald-700">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>TERVERIFIKASI SISTEM</span>
+                          <div className="text-[8.5pt] font-bold text-black uppercase tracking-wide">
+                            TERVERIFIKASI SISTEM
                           </div>
-                          <span className="text-[7.5pt] text-slate-500 font-mono mt-0.5">NPSN: {npsn}</span>
-                          <span className="text-[7.5pt] text-slate-400 mt-0.5">{verifiedDate}</span>
+                          <span className="text-[7.5pt] text-neutral-700 font-mono mt-0.5">NPSN: {npsn}</span>
+                          <span className="text-[7.5pt] text-neutral-600 mt-0.5">{verifiedDate}</span>
                         </>
                       );
                     })()}
                   </div>
 
-                  <p className="text-[10pt] font-bold text-slate-900 underline mt-1">{namaResponden}</p>
-                  <p className="text-[8.5pt] text-slate-600">Perwakilan {namaInstansi}</p>
+                  <p className="text-[9.5pt] font-bold text-black underline mt-1">{namaResponden}</p>
+                  <p className="text-[8.5pt] text-neutral-700">Perwakilan {namaInstansi}</p>
                 </div>
               </div>
 
               {/* Document Legal Footer / Timestamp */}
-              <div className="mt-10 pt-3 border-t border-slate-300 flex items-center justify-between text-[7.5pt] text-slate-500 font-sans">
+              <div className="mt-10 pt-3 border-t border-black flex items-center justify-between text-[7.5pt] text-neutral-700 font-sans">
                 <div>
                   Dicetak secara otomatis melalui Sistem Kuesioner Digital Direktorat SMK pada{' '}
                   {new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' })} WIB

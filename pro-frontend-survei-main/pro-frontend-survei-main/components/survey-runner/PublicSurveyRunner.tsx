@@ -163,23 +163,40 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
       } catch (e) {}
     }
 
-    // 2. Conditional Skip Logic Filter (Rule Target)
+    // 2. Conditional Skip Logic Filter (Rule Target) - only applies to Pilihan Ganda, Checkbox, Dropdown
     if (q.target_rules && q.target_rules.length > 0) {
+      const allSurveyQuestions = categories.flatMap((c) => c.pertanyaan || []);
       for (const rule of q.target_rules) {
+        const sourceQuestion = allSurveyQuestions.find((sq) => sq.uuid === rule.id_source_pertanyaan);
+        if (
+          sourceQuestion &&
+          !['PILIHAN', 'PILIHAN_GANDA', 'CHECKBOX', 'KOTAK_CENTANG', 'DROPDOWN'].includes(sourceQuestion.jenis)
+        ) {
+          continue;
+        }
         const sourceAnswerObj = answers[rule.id_source_pertanyaan];
-        const sourceAnswerText = sourceAnswerObj?.jawaban || '';
+        const rawAns = sourceAnswerObj?.jawaban;
+        const selectedValues: string[] = Array.isArray(rawAns)
+          ? rawAns.map(String)
+          : rawAns
+          ? [String(rawAns)]
+          : [];
+
+        const triggerOption = sourceQuestion?.opsi_pertanyaan?.find(
+          (o) => o.uuid === rule.id_opsi_pemicu
+        );
+        const targetLabel = triggerOption?.opsi_jawaban || rule.nilai_pemicu || '';
+
+        const matchesTrigger =
+          (rule.id_opsi_pemicu && selectedValues.includes(rule.id_opsi_pemicu)) ||
+          (targetLabel !== '' && selectedValues.includes(targetLabel));
 
         if (rule.operator === 'EQUALS') {
-          // If option trigger
-          if (rule.id_opsi_pemicu) {
-            if (typeof sourceAnswerText === 'string' && !sourceAnswerText.includes(rule.id_opsi_pemicu)) {
-              return false;
-            }
-          } else if (rule.nilai_pemicu && sourceAnswerText !== rule.nilai_pemicu) {
-            return false;
-          }
+          if (!matchesTrigger) return false;
+        } else if (rule.operator === 'NOT_EQUALS') {
+          if (selectedValues.length === 0 || matchesTrigger) return false;
         } else if (rule.operator === 'IS_NOT_EMPTY') {
-          if (!sourceAnswerText || sourceAnswerText === '') return false;
+          if (selectedValues.length === 0 || selectedValues.every((v) => !v.trim())) return false;
         }
       }
     }
@@ -193,6 +210,16 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
       [qUuid]: {
         ...(prev[qUuid] || {}),
         jawaban: val,
+      },
+    }));
+  };
+
+  const handleCatatanChange = (qUuid: string, catatan: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [qUuid]: {
+        ...(prev[qUuid] || { jawaban: '' }),
+        catatan,
       },
     }));
   };
@@ -641,26 +668,39 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
                 {/* Tipe Jawaban: Radio / Pilihan Ganda */}
                 {['PILIHAN', 'PILIHAN_GANDA'].includes(q.jenis) && (
                   <div className="space-y-2.5 pl-10">
-                    {q.opsi_pertanyaan?.map((opt) => (
-                      <label
-                        key={opt.uuid}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                          answers[q.uuid]?.jawaban === opt.opsi_jawaban
-                            ? 'border-primary bg-blue-50/60 ring-2 ring-blue-100 font-medium'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`q-${q.uuid}`}
-                          value={opt.opsi_jawaban}
-                          checked={answers[q.uuid]?.jawaban === opt.opsi_jawaban}
-                          onChange={() => handleAnswerChange(q.uuid, opt.opsi_jawaban)}
-                          className="accent-primary"
-                        />
-                        <span className="text-xs text-slate-800">{opt.opsi_jawaban}</span>
-                      </label>
-                    ))}
+                    {q.opsi_pertanyaan?.map((opt) => {
+                      const isSelected = answers[q.uuid]?.jawaban === opt.opsi_jawaban;
+                      return (
+                        <div key={opt.uuid} className="space-y-2">
+                          <label
+                            className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-primary bg-blue-50/60 ring-2 ring-blue-100 font-medium'
+                                : 'border-slate-200 hover:border-slate-300 bg-white'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`q-${q.uuid}`}
+                              value={opt.opsi_jawaban}
+                              checked={isSelected}
+                              onChange={() => handleAnswerChange(q.uuid, opt.opsi_jawaban)}
+                              className="accent-primary"
+                            />
+                            <span className="text-xs text-slate-800">{opt.opsi_jawaban}</span>
+                          </label>
+                          {isSelected && opt.ada_catatan && (
+                            <input
+                              type="text"
+                              value={answers[q.uuid]?.catatan || ''}
+                              onChange={(e) => handleCatatanChange(q.uuid, e.target.value)}
+                              placeholder={opt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                              className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -668,25 +708,36 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
                 {['CHECKBOX', 'KOTAK_CENTANG'].includes(q.jenis) && (
                   <div className="space-y-2.5 pl-10">
                     {q.opsi_pertanyaan?.map((opt) => {
-                      const isChecked = Array.isArray(answers[q.uuid]?.jawaban) &&
+                      const isChecked =
+                        Array.isArray(answers[q.uuid]?.jawaban) &&
                         answers[q.uuid]?.jawaban.includes(opt.opsi_jawaban);
                       return (
-                        <label
-                          key={opt.uuid}
-                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
-                            isChecked
-                              ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100 font-medium'
-                              : 'border-slate-200 hover:border-slate-300 bg-white'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => handleCheckboxToggle(q.uuid, opt.opsi_jawaban)}
-                            className="accent-emerald-600 rounded"
-                          />
-                          <span className="text-xs text-slate-800">{opt.opsi_jawaban}</span>
-                        </label>
+                        <div key={opt.uuid} className="space-y-2">
+                          <label
+                            className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                              isChecked
+                                ? 'border-emerald-500 bg-emerald-50/60 ring-2 ring-emerald-100 font-medium'
+                                : 'border-slate-200 hover:border-slate-300 bg-white'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => handleCheckboxToggle(q.uuid, opt.opsi_jawaban)}
+                              className="accent-emerald-600 rounded"
+                            />
+                            <span className="text-xs text-slate-800">{opt.opsi_jawaban}</span>
+                          </label>
+                          {isChecked && opt.ada_catatan && (
+                            <input
+                              type="text"
+                              value={answers[q.uuid]?.catatan || ''}
+                              onChange={(e) => handleCatatanChange(q.uuid, e.target.value)}
+                              placeholder={opt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                              className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                            />
+                          )}
+                        </div>
                       );
                     })}
                   </div>
@@ -694,7 +745,7 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
 
                 {/* Tipe Jawaban: Dropdown */}
                 {q.jenis === 'DROPDOWN' && (
-                  <div className="pl-10">
+                  <div className="pl-10 space-y-2">
                     <select
                       value={answers[q.uuid]?.jawaban || ''}
                       onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
@@ -707,6 +758,23 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
                         </option>
                       ))}
                     </select>
+                    {(() => {
+                      const selectedOpt = q.opsi_pertanyaan?.find(
+                        (o) => o.opsi_jawaban === answers[q.uuid]?.jawaban
+                      );
+                      if (selectedOpt?.ada_catatan) {
+                        return (
+                          <input
+                            type="text"
+                            value={answers[q.uuid]?.catatan || ''}
+                            onChange={(e) => handleCatatanChange(q.uuid, e.target.value)}
+                            placeholder={selectedOpt.keterangan_catatan || 'Tuliskan keterangan tambahan...'}
+                            className="w-full text-xs p-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          />
+                        );
+                      }
+                      return null;
+                    })()}
                   </div>
                 )}
 

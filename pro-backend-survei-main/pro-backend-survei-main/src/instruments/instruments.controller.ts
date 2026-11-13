@@ -49,6 +49,31 @@ export class InstrumentsController {
     return this.instrumentsService.showAllInstruments(id_survey);
   }
 
+  @Post('logic')
+  @ApiBearerAuth(`access-token`)
+  @UseGuards(AuthGuard('jwt'))
+  @Roles('ADMIN')
+  createLogicRule(
+    @Body()
+    dto: {
+      id_target_pertanyaan: string;
+      id_source_pertanyaan: string;
+      id_opsi_pemicu?: string | null;
+      operator?: 'EQUALS' | 'NOT_EQUALS' | 'IS_NOT_EMPTY';
+      nilai_pemicu?: string;
+    },
+  ) {
+    return this.instrumentsService.createLogicRule(dto);
+  }
+
+  @Delete('logic/:ruleId')
+  @ApiBearerAuth(`access-token`)
+  @UseGuards(AuthGuard('jwt'))
+  @Roles('ADMIN')
+  deleteLogicRule(@Param('ruleId') ruleId: string) {
+    return this.instrumentsService.deleteLogicRule(ruleId);
+  }
+
   @Get(':id')
   @ApiBearerAuth(`access-token`)
   @UseGuards(AuthGuard('jwt'))

@@ -74,6 +74,7 @@ export const SurveyApiService = {
       ? rawOptions.map((o: any) => ({
           opsi_jawaban: o.opsi_jawaban || o.label || '',
           ada_catatan: Boolean(o.ada_catatan),
+          keterangan_catatan: o.keterangan_catatan || '',
         }))
       : [];
 
@@ -128,6 +129,7 @@ export const SurveyApiService = {
         ? payload.opsi_pertanyaan.map((o: any) => ({
             opsi_jawaban: o.opsi_jawaban || o.label || '',
             ada_catatan: Boolean(o.ada_catatan),
+            keterangan_catatan: o.keterangan_catatan || '',
           }))
         : [];
       delete payload.opsi_pertanyaan;
@@ -205,6 +207,34 @@ export const SurveyApiService = {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Gagal menghapus kategori');
+  },
+
+  createLogicRule: async (rule: {
+    id_target_pertanyaan: string;
+    id_source_pertanyaan: string;
+    id_opsi_pemicu?: string | null;
+    operator?: string;
+    nilai_pemicu?: string;
+  }): Promise<any> => {
+    const res = await fetch(`${BASE_API_URL}/instruments/logic`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(rule),
+    });
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => null);
+      throw new Error(errJson?.message || 'Gagal menyimpan aturan logika percabangan');
+    }
+    const json = await res.json();
+    return json.data;
+  },
+
+  deleteLogicRule: async (ruleId: string): Promise<void> => {
+    const res = await fetch(`${BASE_API_URL}/instruments/logic/${ruleId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Gagal menghapus aturan logika percabangan');
   },
 };
 
