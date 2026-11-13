@@ -59,6 +59,21 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
   const DRAFT_KEY = `survei_draft_${survey.uuid}`;
   const [draftAvailable, setDraftAvailable] = useState<boolean>(false);
 
+  // Custom theme & cover
+  const [themeColor, setThemeColor] = useState<string>('#0B5C9E');
+  const [coverImage, setCoverImage] = useState<string>((survey as any).banner_image || (survey as any).cover_image || '');
+
+  useEffect(() => {
+    try {
+      const savedThemeStr = localStorage.getItem(`survey_theme_${survey.uuid}`);
+      if (savedThemeStr) {
+        const parsed = JSON.parse(savedThemeStr);
+        if (parsed.theme_color) setThemeColor(parsed.theme_color);
+        if (parsed.cover_image) setCoverImage(parsed.cover_image);
+      }
+    } catch (e) {}
+  }, [survey.uuid]);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
@@ -359,12 +374,27 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
       )}
 
       {/* Header Banner Card Ala Google Forms */}
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-md overflow-hidden mb-6">
-        <div className="h-3 bg-[#0B5C9E]" />
+      <div
+        className="bg-white rounded-3xl border border-slate-200 shadow-md overflow-hidden mb-6"
+        style={{
+          borderTopWidth: coverImage ? '4px' : '10px',
+          borderTopColor: themeColor,
+        }}
+      >
+        {coverImage ? (
+          <div
+            className="w-full h-36 md:h-48 bg-cover bg-center relative"
+            style={{ backgroundImage: `url(${coverImage})` }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/10" />
+          </div>
+        ) : (
+          <div className="h-2.5 transition-all" style={{ backgroundColor: themeColor }} />
+        )}
         <div className="p-6 md:p-8">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#0B5C9E]" />
+              <ShieldCheck className="w-3.5 h-3.5" style={{ color: themeColor }} />
               Survei Resmi Kemendikbudristek
             </span>
           </div>

@@ -18,3 +18,4 @@ const DokumenLayout = ({ children }: PropsLayout) => {
 };
 
 export default DokumenLayout;
+

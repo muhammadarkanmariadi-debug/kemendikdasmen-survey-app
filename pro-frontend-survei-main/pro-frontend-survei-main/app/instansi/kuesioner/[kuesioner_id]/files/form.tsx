@@ -78,11 +78,6 @@ export default function DragAndDropUploader({ submission_id, survey_id }: { subm
             setFiles((prev) => [...prev, ...acceptedFiles]);
         }
     };
-            file,
-            id: URL.createObjectURL(file),
-        }));
-        setFiles((prev) => [...prev, ...newFiles]);
-    };
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
