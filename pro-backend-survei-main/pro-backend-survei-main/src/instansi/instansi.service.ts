@@ -60,11 +60,11 @@ export class InstansiService {
 
       const whereCondition: any = search ? {
         OR: [
-          { nama_instansi: { contains: search } },
-          { kode_instansi: { contains: search } },
-          { alamat: { contains: search } },
-          { kota: { contains: search } },
-          { provinsi: { contains: search } },
+          { nama_instansi: { contains: search, mode: 'insensitive' } },
+          { kode_instansi: { contains: search, mode: 'insensitive' } },
+          { alamat: { contains: search, mode: 'insensitive' } },
+          { kota: { contains: search, mode: 'insensitive' } },
+          { provinsi: { contains: search, mode: 'insensitive' } },
         ]
       } : {};
 

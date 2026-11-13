@@ -46,6 +46,8 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
   const [subRole, setSubRole] = useState<'SISWA' | 'GURU' | 'KEPALA_SEKOLAH'>('SISWA');
   const [namaLengkap, setNamaLengkap] = useState<string>('');
   const [nomorIdentitas, setNomorIdentitas] = useState<string>('');
+  const [kelas, setKelas] = useState<string>('');
+  const [kompetensiKeahlian, setKompetensiKeahlian] = useState<string>('');
   const [kontak, setKontak] = useState<string>('');
 
   // Search filter for institutions
@@ -138,21 +140,27 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
   }, [selectedInstansiId, subRole, namaLengkap, nomorIdentitas, kontak, answers, currentStep, DRAFT_KEY]);
 
   // Kategori / Sections
-  const categories: IKategori[] = survey.kategori || [];
+  const categories: IKategori[] = Array.isArray(survey.kategori) ? survey.kategori : [];
   const currentCategory = currentStep > 0 && currentStep <= categories.length ? categories[currentStep - 1] : null;
 
-  // Filter institutions based on search query
-  const filteredInstitutions = institutions.filter(
-    (inst) =>
-      inst.nama_instansi.toLowerCase().includes(instansiSearch.toLowerCase()) ||
-      inst.npsn.includes(instansiSearch) ||
-      inst.kota.toLowerCase().includes(instansiSearch.toLowerCase())
-  );
+  // Filter institutions based on search query (case-insensitive)
+  const filteredInstitutions = (Array.isArray(institutions) ? institutions : []).filter((inst) => {
+    if (!instansiSearch.trim()) return true;
+    const q = instansiSearch.toLowerCase().trim();
+    return (
+      (inst.nama_instansi?.toLowerCase() || '').includes(q) ||
+      (inst.npsn ? String(inst.npsn).toLowerCase() : '').includes(q) ||
+      (inst.kota?.toLowerCase() || '').includes(q) ||
+      (inst.provinsi?.toLowerCase() || '').includes(q) ||
+      (inst.alamat?.toLowerCase() || '').includes(q)
+    );
+  });
 
-  const selectedInstansi = institutions.find((i) => i.uuid === selectedInstansiId);
+  const selectedInstansi = (Array.isArray(institutions) ? institutions : []).find((i) => i.uuid === selectedInstansiId);
 
   // Filter questions in the current section based on respondent role and conditional logic
-  const visibleQuestions = (currentCategory?.pertanyaan || []).filter((q) => {
+  const visibleQuestions = (Array.isArray(currentCategory?.pertanyaan) ? currentCategory.pertanyaan : []).filter((q) => {
+    if (!q) return false;
     // 1. Role Filter
     if (q.for_sub_role) {
       try {
@@ -163,17 +171,10 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
       } catch (e) {}
     }
 
-    // 2. Conditional Skip Logic Filter (Rule Target) - only applies to Pilihan Ganda, Checkbox, Dropdown
-    if (q.target_rules && q.target_rules.length > 0) {
-      const allSurveyQuestions = categories.flatMap((c) => c.pertanyaan || []);
+    // 2. Conditional Skip Logic Filter (Rule Target)
+    if (Array.isArray(q.target_rules) && q.target_rules.length > 0) {
       for (const rule of q.target_rules) {
-        const sourceQuestion = allSurveyQuestions.find((sq) => sq.uuid === rule.id_source_pertanyaan);
-        if (
-          sourceQuestion &&
-          !['PILIHAN', 'PILIHAN_GANDA', 'CHECKBOX', 'KOTAK_CENTANG', 'DROPDOWN'].includes(sourceQuestion.jenis)
-        ) {
-          continue;
-        }
+        if (!rule) continue;
         const sourceAnswerObj = answers[rule.id_source_pertanyaan];
         const rawAns = sourceAnswerObj?.jawaban;
         const selectedValues: string[] = Array.isArray(rawAns)
@@ -295,13 +296,18 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
         catatan: val.catatan || '',
       }));
 
+      const formattedIdentitas =
+        subRole === 'SISWA' && (kelas || kompetensiKeahlian)
+          ? `${nomorIdentitas} (Kelas: ${kelas || '-'}, Keahlian: ${kompetensiKeahlian || '-'})`
+          : nomorIdentitas;
+
       const payload = {
         id_survey: survey.uuid,
         id_instansi: selectedInstansiId,
         id_jenis_responden: '',
         nama: namaLengkap,
         sub_role: subRole,
-        nomor_identitas: nomorIdentitas,
+        nomor_identitas: formattedIdentitas,
         jawaban: jawabanPayload,
       };
 
@@ -445,12 +451,88 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
         </div>
       </div>
 
+      {/* Category Tabs / Stepper (Daftar Kategori untuk Geser Cepat) */}
+      {categories.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200 p-3 shadow-xs mb-6">
+          <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 px-1 flex items-center justify-between">
+            <span>Daftar Bagian & Kategori Instrumen:</span>
+            <span className="text-primary font-medium lowercase">
+              {currentStep === 0 ? 'Langkah 0 dari ' + categories.length : `Bagian ${currentStep} dari ${categories.length}`}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+            <button
+              type="button"
+              onClick={() => {
+                setCurrentStep(0);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                currentStep === 0
+                  ? 'bg-primary text-white shadow-sm ring-2 ring-primary/20'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                currentStep === 0 ? 'bg-white/20 text-white' : 'bg-slate-300 text-slate-700'
+              }`}>
+                0
+              </span>
+              <span>Identitas & Sekolah</span>
+            </button>
+
+            {categories.map((cat, idx) => {
+              const stepNumber = idx + 1;
+              const isActive = currentStep === stepNumber;
+              const isPassed = currentStep > stepNumber;
+              return (
+                <button
+                  key={cat.uuid || idx}
+                  type="button"
+                  onClick={() => {
+                    if (selectedInstansiId && namaLengkap && nomorIdentitas) {
+                      setCurrentStep(stepNumber);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                      toast.warning('Mohon lengkapi dan konfirmasi data identitas terlebih dahulu.');
+                    }
+                  }}
+                  className={`shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                    isActive
+                      ? 'bg-primary text-white shadow-sm ring-2 ring-primary/20'
+                      : isPassed
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100'
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-100'
+                  }`}
+                  title={cat.nama_kategori}
+                >
+                  <span
+                    className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      isActive
+                        ? 'bg-white/20 text-white'
+                        : isPassed
+                        ? 'bg-emerald-200 text-emerald-900'
+                        : 'bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    {isPassed ? '✓' : stepNumber}
+                  </span>
+                  <span className="truncate max-w-[160px] sm:max-w-[220px]">
+                    {cat.nama_kategori}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Encouraging Progress Bar */}
       {currentStep > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm mb-6">
           <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1.5">
             <span>
-              Bagian {currentStep} dari {categories.length}: {currentCategory?.nama_kategori}
+              Bagian {currentStep} dari {categories.length}: <strong className="text-slate-900">{currentCategory?.nama_kategori}</strong>
             </span>
             <span className="text-primary font-bold">{progressPercent}% Selesai</span>
           </div>
@@ -586,6 +668,37 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
               />
             </div>
 
+            {subRole === 'SISWA' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Kelas <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: XII RPL 1 / XII TKJ"
+                    value={kelas}
+                    onChange={(e) => setKelas(e.target.value)}
+                    className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Kompetensi / Konsentrasi Keahlian <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Teknik Komputer & Jaringan"
+                    value={kompetensiKeahlian}
+                    onChange={(e) => setKompetensiKeahlian(e.target.value)}
+                    className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Nomor Kontak / WhatsApp (Opsional)
@@ -598,6 +711,21 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
                 className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
+          </div>
+
+          {/* Tombol Aksi Step 0 - Lanjut ke Kategori 1 */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-500 text-center sm:text-left">
+              Pastikan data sekolah dan identitas Anda sudah benar sebelum lanjut ke butir pertanyaan.
+            </div>
+            <button
+              type="button"
+              onClick={handleNextStep}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#094d84] shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+            >
+              <span>Mulai Isi Kuesioner (Lanjut ke Bagian 1)</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
@@ -778,21 +906,41 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
                   </div>
                 )}
 
-                {/* Tipe Jawaban: Isian Singkat */}
-                {['ISIAN', 'ISIAN_SINGKAT'].includes(q.jenis) && (
+                {/* Tipe Jawaban: Isian Singkat / Textarea Terbuka */}
+                {['ISIAN', 'ISIAN_SINGKAT', 'LINK', 'URL'].includes(q.jenis) && (
                   <div className="pl-10">
-                    <input
-                      type="text"
-                      placeholder="Jawaban Anda..."
-                      value={answers[q.uuid]?.jawaban || ''}
-                      onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
-                      className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
+                    {q.pertanyaan.toLowerCase().includes('bagaimana') ||
+                    q.pertanyaan.toLowerCase().includes('kendala') ||
+                    q.pertanyaan.toLowerCase().includes('tantangan') ||
+                    q.pertanyaan.toLowerCase().includes('saran') ||
+                    q.pertanyaan.toLowerCase().includes('harapan') ||
+                    q.pertanyaan.toLowerCase().includes('pengalaman') ||
+                    q.pertanyaan.toLowerCase().includes('rekomendasi') ? (
+                      <textarea
+                        rows={4}
+                        placeholder="Tuliskan uraian jawaban Anda..."
+                        value={answers[q.uuid]?.jawaban || ''}
+                        onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
+                        className="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder={
+                          q.pertanyaan.toLowerCase().includes('drive') || q.pertanyaan.toLowerCase().includes('link')
+                            ? 'Contoh: https://drive.google.com/...'
+                            : 'Jawaban Anda...'
+                        }
+                        value={answers[q.uuid]?.jawaban || ''}
+                        onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
+                        className="w-full text-xs p-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    )}
                   </div>
                 )}
 
-                {/* Tipe Jawaban: Paragraf */}
-                {q.jenis === 'PARAGRAF' && (
+                {/* Tipe Jawaban: Paragraf / Textarea */}
+                {['PARAGRAF', 'TEXTAREA', 'ESAI'].includes(q.jenis) && (
                   <div className="pl-10">
                     <textarea
                       rows={4}
@@ -844,38 +992,95 @@ export function PublicSurveyRunner({ survey, institutions }: RunnerProps) {
               </div>
             ))
           )}
+
+          {/* In-Content Navigation Card (Tombol Next / Geser Kategori di Bawah Pertanyaan) */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <button
+              type="button"
+              onClick={handlePrevStep}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{currentStep === 1 ? 'Kembali ke Identitas' : 'Kategori Sebelumnya'}</span>
+            </button>
+
+            <div className="text-center sm:text-right flex-1 px-2">
+              <p className="text-[11px] text-slate-400">
+                {currentStep < categories.length
+                  ? `Selanjutnya: ${categories[currentStep]?.nama_kategori}`
+                  : 'Langkah Terakhir: Pengiriman Jawaban'}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleNextStep}
+              disabled={isSubmitting}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#094d84] shadow-md hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              {isSubmitting ? (
+                <span>Mengirim Jawaban...</span>
+              ) : currentStep === categories.length ? (
+                <>
+                  <span>Kirim Formulir Sekarang</span>
+                  <CheckCircle2 className="w-4 h-4" />
+                </>
+              ) : (
+                <>
+                  <span>Lanjut ke Kategori Berikutnya (Next)</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Bottom Sticky Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 p-3.5 bg-white/95 backdrop-blur-md border-t border-slate-200 z-30 shadow-lg">
+        <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={handlePrevStep}
             disabled={currentStep === 0 || isSubmitting}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all disabled:opacity-30 disabled:pointer-events-none cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Kembali</span>
+            <span className="hidden sm:inline">Kembali</span>
           </button>
+
+          <div className="text-center truncate px-2 text-[11px] font-medium text-slate-600">
+            {currentStep === 0 ? (
+              <span>Langkah 0: Data Responden</span>
+            ) : (
+              <span className="truncate">
+                Bagian {currentStep}/{categories.length}: <strong>{currentCategory?.nama_kategori}</strong>
+              </span>
+            )}
+          </div>
 
           <button
             type="button"
             onClick={handleNextStep}
             disabled={isSubmitting}
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-semibold text-white bg-primary hover:bg-[#094d84] shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 sm:px-7 py-2.5 rounded-xl text-xs font-bold text-white bg-primary hover:bg-[#094d84] shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
           >
             {isSubmitting ? (
-              <span>Mengirim Jawaban...</span>
+              <span>Mengirim...</span>
             ) : currentStep === categories.length ? (
               <>
                 <span>Kirim Formulir</span>
                 <CheckCircle2 className="w-4 h-4" />
               </>
+            ) : currentStep === 0 ? (
+              <>
+                <span>Mulai Kuesioner (Next)</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
             ) : (
               <>
-                <span>Berikutnya</span>
+                <span>Berikutnya (Next)</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

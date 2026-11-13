@@ -103,8 +103,8 @@ export class InstrumentsService {
         ...(id_survey ? { id_survey } : {}),
         ...(search ? {
           OR: [
-            { kategori: { contains: search } },
-            { pertanyaan: { contains: search } }
+            { kategori: { contains: search, mode: 'insensitive' } },
+            { pertanyaan: { contains: search, mode: 'insensitive' } }
           ]
         } : {})
       };

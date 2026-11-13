@@ -105,10 +105,16 @@ export function ModernFieldSurveyRunner({
     selectedInstansi?.tipe ? it.tipe === selectedInstansi.tipe : true
   );
 
-  // Filtered respondents by search query
-  const filteredRespondents = respondents.filter((r) =>
-    r.nama_instansi.toLowerCase().includes(instansiSearch.toLowerCase())
-  );
+  // Filtered respondents by search query (case-insensitive)
+  const filteredRespondents = respondents.filter((r) => {
+    if (!instansiSearch.trim()) return true;
+    const q = instansiSearch.toLowerCase().trim();
+    return (
+      (r.nama_instansi?.toLowerCase() || '').includes(q) ||
+      (r.npsn ? String(r.npsn).toLowerCase() : '').includes(q) ||
+      (r.kota?.toLowerCase() || '').includes(q)
+    );
+  });
 
   // Parse Question Image
   const parseQuestionImage = (fileConfig?: string | null) => {
@@ -683,21 +689,41 @@ export function ModernFieldSurveyRunner({
                         </div>
                       )}
 
-                      {/* Isian Singkat */}
-                      {['ISIAN', 'ISIAN_SINGKAT'].includes(q.jenis) && (
-                        <input
-                          type="text"
-                          placeholder="Tuliskan jawaban singkat responden..."
-                          value={typeof currentAns === 'string' ? currentAns : ''}
-                          onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
-                          className="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
-                        />
+                      {/* Isian Singkat / Textarea Terbuka */}
+                      {['ISIAN', 'ISIAN_SINGKAT', 'LINK', 'URL'].includes(q.jenis) && (
+                        q.pertanyaan.toLowerCase().includes('bagaimana') ||
+                        q.pertanyaan.toLowerCase().includes('kendala') ||
+                        q.pertanyaan.toLowerCase().includes('tantangan') ||
+                        q.pertanyaan.toLowerCase().includes('saran') ||
+                        q.pertanyaan.toLowerCase().includes('harapan') ||
+                        q.pertanyaan.toLowerCase().includes('pengalaman') ||
+                        q.pertanyaan.toLowerCase().includes('rekomendasi') ? (
+                          <textarea
+                            rows={4}
+                            placeholder="Tuliskan uraian hasil wawancara / catatan mendalam..."
+                            value={typeof currentAns === 'string' ? currentAns : ''}
+                            onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
+                            className="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
+                          />
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder={
+                              q.pertanyaan.toLowerCase().includes('drive') || q.pertanyaan.toLowerCase().includes('link')
+                                ? 'Contoh: https://drive.google.com/...'
+                                : 'Tuliskan jawaban singkat responden...'
+                            }
+                            value={typeof currentAns === 'string' ? currentAns : ''}
+                            onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}
+                            className="w-full text-xs p-3.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E]"
+                          />
+                        )
                       )}
 
                       {/* Paragraf / Uraian Panjang */}
-                      {q.jenis === 'PARAGRAF' && (
+                      {['PARAGRAF', 'TEXTAREA', 'ESAI'].includes(q.jenis) && (
                         <textarea
-                          rows={3}
+                          rows={4}
                           placeholder="Tuliskan uraian hasil wawancara mendalam..."
                           value={typeof currentAns === 'string' ? currentAns : ''}
                           onChange={(e) => handleAnswerChange(q.uuid, e.target.value)}

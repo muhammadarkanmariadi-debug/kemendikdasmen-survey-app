@@ -43,7 +43,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -59,7 +60,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -103,7 +105,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -119,7 +122,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -165,7 +169,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -181,7 +186,8 @@ export class SubmissionService {
           OR: [
             {
               nama_survey: {
-                contains: search || ""
+                contains: search || "",
+                mode: 'insensitive',
               },
             },
           ],
@@ -646,8 +652,8 @@ export class SubmissionService {
           id_user,
           id_survey,
           OR: [
-            { responden: { nama: { contains: search ?? '' } } },
-            { user: { nama_user: { contains: search ?? '' } } }
+            { responden: { nama: { contains: search ?? '', mode: 'insensitive' } } },
+            { user: { nama_user: { contains: search ?? '', mode: 'insensitive' } } }
           ]
         },
         include: {
@@ -668,8 +674,8 @@ export class SubmissionService {
           id_user,
           id_survey,
           OR: [
-            { responden: { nama: { contains: search ?? '' } } },
-            { user: { nama_user: { contains: search ?? '' } } }
+            { responden: { nama: { contains: search ?? '', mode: 'insensitive' } } },
+            { user: { nama_user: { contains: search ?? '', mode: 'insensitive' } } }
           ]
         },
       });
@@ -960,8 +966,8 @@ export class SubmissionService {
         where: {
           id_survey,
           OR: [
-            { responden: { nama: { contains: search ?? '' } } },
-            { user: { nama_user: { contains: search ?? '' } } }
+            { responden: { nama: { contains: search ?? '', mode: 'insensitive' } } },
+            { user: { nama_user: { contains: search ?? '', mode: 'insensitive' } } }
           ]
         },
         include: {
@@ -984,8 +990,8 @@ export class SubmissionService {
         where: {
           id_survey,
           OR: [
-            { responden: { nama: { contains: search ?? '' } } },
-            { user: { nama_user: { contains: search ?? '' } } }
+            { responden: { nama: { contains: search ?? '', mode: 'insensitive' } } },
+            { user: { nama_user: { contains: search ?? '', mode: 'insensitive' } } }
           ]
         },
       });

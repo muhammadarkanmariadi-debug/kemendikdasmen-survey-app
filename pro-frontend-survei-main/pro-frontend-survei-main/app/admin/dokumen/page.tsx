@@ -134,7 +134,7 @@ export default function PengaturanDokumenPage() {
                 activeTab === 'KOP'
                   ? 'border-slate-900 text-slate-900'
                   : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               1. Kop Surat (Gambar)
             </button>
@@ -145,7 +145,7 @@ export default function PengaturanDokumenPage() {
                 activeTab === 'SUSUNAN'
                   ? 'border-slate-900 text-slate-900'
                   : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               2. Susunan Komponen Berkas
             </button>

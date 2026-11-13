@@ -13,7 +13,7 @@ export const PublicIdentitySchema = z.object({
   nomor_identitas: z
     .string()
     .min(3, 'Nomor identitas (NIS/NUPTK) minimal 3 digit')
-    .max(30, 'Nomor identitas maksimal 30 karakter'),
+    .max(150, 'Nomor identitas maksimal 150 karakter'),
   kontak: z
     .string()
     .max(30, 'Nomor kontak maksimal 30 karakter')
