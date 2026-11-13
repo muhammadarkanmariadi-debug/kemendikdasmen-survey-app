@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   HasilSurvey,
@@ -107,6 +107,25 @@ export function OfficialPrintDocumentModal({
 
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [activeSettingsTab, setActiveSettingsTab] = useState<'KOP' | 'SUSUNAN'>('KOP');
+
+  // Load custom document settings from localStorage if configured by Admin
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('official_doc_config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setConfig((prev) => ({
+          ...prev,
+          ...parsed,
+          nomorSurat: parsed.nomorSurat?.includes('{NOMOR_REGISTRASI}')
+            ? parsed.nomorSurat.replace('{NOMOR_REGISTRASI}', submission.uuid.substring(0, 8).toUpperCase())
+            : prev.nomorSurat,
+        }));
+      }
+    } catch (e) {
+      console.error('Failed to load doc config', e);
+    }
+  }, [submission.uuid]);
 
   if (!isOpen) return null;
 
