@@ -148,22 +148,20 @@ export default function PengaturanDokumenPage() {
             <button
               type="button"
               onClick={() => setActiveTab('KOP')}
-              className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${
-                activeTab === 'KOP'
+              className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${activeTab === 'KOP'
                   ? 'border-[#0B5C9E] text-[#0B5C9E]'
                   : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               1. Kop Surat Kedinasan
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('SUSUNAN')}
-              className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${
-                activeTab === 'SUSUNAN'
+              className={`flex-1 py-2.5 text-xs font-bold text-center border-b-2 transition-colors cursor-pointer ${activeTab === 'SUSUNAN'
                   ? 'border-[#0B5C9E] text-[#0B5C9E]'
                   : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
+                }`}
             >
               2. Susunan Komponen Berkas
             </button>

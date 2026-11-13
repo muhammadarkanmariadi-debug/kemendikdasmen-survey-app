@@ -40,7 +40,7 @@ export class KategoriService {
 
       const whereCondition: any = search ? {
         OR: [
-          { nama_kategori: { contains: search } },
+          { nama_kategori: { contains: search, mode: 'insensitive' } },
         ]
       } : {};
 
@@ -79,7 +79,7 @@ export class KategoriService {
         id_survey: id_survey,
         ...(search ? {
           OR: [
-            { nama_kategori: { contains: search } },
+            { nama_kategori: { contains: search, mode: 'insensitive' } },
           ]
         } : {})
       };

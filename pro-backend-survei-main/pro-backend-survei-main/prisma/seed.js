@@ -985,6 +985,10 @@ async function main() {
     submissionCounter++;
   }
 
+  // 8b. Seed Instrumen Supervisi Bantuan Serkom 2026 (Sekolah & Murid)
+  const { seedSerkom2026 } = require('./seed-serkom-2026');
+  await seedSerkom2026();
+
   console.log('[9/9] Selesai!');
   console.log('====================================================');
   console.log(' SEEDING BERHASIL DILAKUKAN!');

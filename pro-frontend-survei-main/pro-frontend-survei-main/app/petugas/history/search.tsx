@@ -2,46 +2,62 @@
 
 import { useRouter } from "next/navigation"
 import { KeyboardEvent, useState } from "react"
+import { Search as SearchIcon, X } from "lucide-react"
 
 type Props = {
     search: string
 }
-
 const Search = ({ search }: Props) => {
-    const [keyword, setKeyword] = useState<string>(search)
+    const [keyword, setKeyword] = useState<string>(search || "")
     const router = useRouter()
 
-    const handleSearch = (e: KeyboardEvent<HTMLInputElement>) => {
+    const executeSearch = (val: string) => {
+        const params = new URLSearchParams(window.location.search)
+        const trimmed = val.trim()
+        if (trimmed) {
+            params.set("search", trimmed)
+        } else {
+            params.delete("search")
+        }
+        params.set("page", "1")
+        router.push(`?${params.toString()}`)
+    }
+
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter") {
             e.preventDefault()
-            const params = new URLSearchParams(window.location.search)
-            if (keyword.trim()) {
-                params.set("search", keyword)
-            } else {
-                params.delete("search")
-            }
-            router.push(`?${params.toString()}`)
+            executeSearch(keyword)
         }
+    }
+
+    const handleClear = () => {
+        setKeyword("")
+        executeSearch("")
     }
 
     return (
         <div className="relative w-full">
-            <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                </svg>
-            </div>
+            <SearchIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
                 id="keyword"
                 type="text"
                 value={keyword}
                 onChange={e => setKeyword(e.target.value)}
-                placeholder="Cari berdasarkan nama responden atau instansi... (Tekan Enter)"
-                onKeyUp={event => handleSearch(event)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B5C9E]/20 focus:border-[#0B5C9E] transition-all"
+                placeholder="Cari riwayat pengisian..."
+                onKeyDown={handleKeyDown}
+                className="w-full pl-9 pr-9 py-2 border border-slate-200 focus:border-[#0B5C9E] focus:ring-2 focus:ring-[#0B5C9E]/20 rounded-xl text-sm bg-white text-slate-900 transition-all outline-none"
             />
+            {keyword && (
+                <button
+                    type="button"
+                    onClick={handleClear}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                    title="Hapus pencarian"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            )}
         </div>
     )
 }
-
 export default Search

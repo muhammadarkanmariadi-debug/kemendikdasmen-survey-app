@@ -96,8 +96,8 @@ export class LokasiPetugasService {
         id_survey: id,
         ...(search ? {
           OR: [
-            { nama_petugas: { contains: search } },
-            { nama_responden: { contains: search } }
+            { nama_petugas: { contains: search, mode: 'insensitive' } },
+            { nama_responden: { contains: search, mode: 'insensitive' } }
           ]
         } : {})
       };
@@ -136,8 +136,8 @@ export class LokasiPetugasService {
         where: {
           id_survey: id,
           OR: [
-            { nama_petugas: { contains: search || "" } },
-            { nama_responden: { contains: search || "" } }
+            { nama_petugas: { contains: search || "", mode: 'insensitive' } },
+            { nama_responden: { contains: search || "", mode: 'insensitive' } }
           ]
         }
       })

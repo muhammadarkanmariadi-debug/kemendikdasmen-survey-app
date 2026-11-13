@@ -65,8 +65,8 @@ export class SurveysService {
 
       const whereCondition: any = search ? {
         OR: [
-          { nama_survey: { contains: search } },
-          { deskripsi: { contains: search } }
+          { nama_survey: { contains: search, mode: 'insensitive' } },
+          { deskripsi: { contains: search, mode: 'insensitive' } }
         ]
       } : {};
 

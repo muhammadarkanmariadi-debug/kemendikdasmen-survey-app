@@ -52,8 +52,8 @@ export class RespondenService {
         },
         ...(search ? {
           OR: [
-            { nama: { contains: search } },
-            { provinsi: { contains: search } }
+            { nama: { contains: search, mode: 'insensitive' } },
+            { provinsi: { contains: search, mode: 'insensitive' } }
           ]
         } : {})
       };

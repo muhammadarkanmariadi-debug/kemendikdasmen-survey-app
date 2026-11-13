@@ -56,8 +56,8 @@ export class PetugasService {
         role: `PETUGAS` as const,
         ...(search ? {
           OR: [
-            { nama_user: { contains: search } },
-            { username: { contains: search } }
+            { nama_user: { contains: search, mode: 'insensitive' } },
+            { username: { contains: search, mode: 'insensitive' } }
           ]
         } : {})
       };
