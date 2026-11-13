@@ -1,0 +1,138 @@
+# ==============================================================================
+# Monorepo Root .gitignore
+# Platform Penjaminan Mutu & Survei Digital Direktorat SMK
+# Covers: Root Workspace, Next.js Frontend, NestJS Backend, Prisma & OS
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. DEPENDENCIES & PACKAGE MANAGERS
+# ------------------------------------------------------------------------------
+node_modules/
+*/node_modules/
+*/*/node_modules/
+.pnp/
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+.pnpm-store/
+
+# ------------------------------------------------------------------------------
+# 2. BUILD OUTPUTS & COMPILED CODE
+# ------------------------------------------------------------------------------
+# Next.js
+.next/
+*/.next/
+*/*/.next/
+out/
+*/out/
+*/*/out/
+
+# NestJS / TypeScript
+dist/
+*/dist/
+*/*/dist/
+build/
+*/build/
+*/*/build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma Generated Clients
+generated/
+*/generated/
+*/*/generated/
+*.sqlite
+*.sqlite-journal
+
+# ------------------------------------------------------------------------------
+# 3. ENVIRONMENT & SECRETS (Do NOT commit credentials!)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+
+# ------------------------------------------------------------------------------
+# 4. LOGS & DIAGNOSTICS
+# ------------------------------------------------------------------------------
+logs/
+*/logs/
+*/*/logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# 5. USER UPLOADS & RUNTIME STORAGE (Dev Backend)
+# ------------------------------------------------------------------------------
+pro-backend-survei-main/pro-backend-survei-main/public/documentations/*
+!pro-backend-survei-main/pro-backend-survei-main/public/documentations/.gitkeep
+pro-backend-survei-main/pro-backend-survei-main/public/documents/*
+!pro-backend-survei-main/pro-backend-survei-main/public/documents/.gitkeep
+
+# ------------------------------------------------------------------------------
+# 6. TESTING & CODE COVERAGE
+# ------------------------------------------------------------------------------
+coverage/
+*/coverage/
+*/*/coverage/
+.nyc_output/
+.turbo/
+.vercel/
+
+# ------------------------------------------------------------------------------
+# 7. OS & IDE TEMPORARY FILES
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# JetBrains
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Sublime Text / Eclipse
+*.sublime-workspace
+*.sublime-project
+.project
+.classpath
+.settings/
+
+# ------------------------------------------------------------------------------
+# 8. TEMPORARY & SCRATCH FILES
+# ------------------------------------------------------------------------------
+tmp/
+temp/
+.tmp/
+.temp/
+

@@ -1,0 +1,27 @@
+{
+  "name": "app-survei-kemendikbud",
+  "version": "1.0.0",
+  "description": "Sistem Survei & Instrumen Digital Terintegrasi Direktorat SMK Kemendikbudristek (Google Forms Style)",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"BACKEND,FRONTEND\" -c \"cyan.bold,yellow.bold\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run start:dev",
+    "dev:frontend": "npm --prefix pro-frontend-survei-main/pro-frontend-survei-main run dev",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run build",
+    "build:frontend": "npm --prefix pro-frontend-survei-main/pro-frontend-survei-main run build",
+    "db:switch": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:switch --",
+    "db:push": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:push",
+    "db:seed": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:seed",
+    "db:generate": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:generate",
+    "db:migrate": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:migrate",
+    "db:studio": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run db:studio",
+    "install:all": "npm --prefix pro-backend-survei-main/pro-backend-survei-main install --legacy-peer-deps && npm --prefix pro-frontend-survei-main/pro-frontend-survei-main install",
+    "lint": "npm run lint:backend && npm run lint:frontend",
+    "lint:backend": "npm --prefix pro-backend-survei-main/pro-backend-survei-main run lint",
+    "lint:frontend": "npm --prefix pro-frontend-survei-main/pro-frontend-survei-main run lint"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "fe-direktorat",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3900 --turbopack",
+    "build": "next build",
+    "start": "next start -p 3900",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^39.0.2",
+    "@ckeditor/ckeditor5-react": "^11.0.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@hookform/resolvers": "^7.0.6",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-query-devtools": "^5.107.1",
+    "@types/file-saver": "^2.0.7",
+    "axios": "^1.9.0",
+    "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "html2pdf.js": "^0.14.0",
+    "jose": "^6.0.11",
+    "js-cookie": "^3.0.5",
+    "lucide-react": "^1.72.0",
+    "next": "^15.5.29",
+    "next-auth": "^4.24.11",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.92.0",
+    "react-icons": "^5.5.0",
+    "react-select": "^5.10.1",
+    "react-toastify": "^11.0.5",
+    "recharts": "^2.15.3",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/axios": "^0.9.36",
+    "@types/html2pdf.js": "^0.10.0",
+    "@types/js-cookie": "^3.0.6",
+    "@types/next-auth": "^3.13.0",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/react-toastify": "^4.0.2",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

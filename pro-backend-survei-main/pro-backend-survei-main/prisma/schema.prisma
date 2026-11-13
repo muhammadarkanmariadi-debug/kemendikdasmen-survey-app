@@ -1,0 +1,346 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// AUTO-GENERATED TEMPLATE FOR MULTI-PROVIDER SUPPORT (MySQL, PostgreSQL, SQLite, SQL Server)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id                   Int                    @id @default(autoincrement())
+  uuid                 String                 @unique @default(uuid())
+  nama_user            String                 @default("")
+  username             String                 @unique @default("")
+  password             String                 @default("")
+  role                 Role                   @default(ADMIN)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  hasil_survey         hasil_survey[]
+  tanda_tangan_petugas tanda_tangan_petugas[]
+  lokasi_petugas       lokasi_petugas[]
+  instansi             instansi?
+  assignments          assignments[]
+}
+
+model jenis_responden {
+  id        Int          @id @default(autoincrement())
+  uuid      String       @unique @default(uuid())
+  jenis     String       @default("")
+  is_public Boolean      @default(false)
+  tipe      TipeInstansi @default(SEKOLAH)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model responden {
+  id                 Int              @id @default(autoincrement())
+  uuid               String           @unique @default(uuid())
+  jenis_responden    Responden        @default(SEKOLAH)
+  nama               String           @default("")
+  alamat             String           @default("")
+  provinsi           String           @default("")
+  kab_kota           String           @default("")
+  id_jenis_responden String           @default("")
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  instansi           instansi?        @relation(fields: [id_instansi], references: [uuid])
+  hasil_survey       hasil_survey[]
+  lokasi_petugas     lokasi_petugas[]
+  id_instansi        String?
+}
+
+model survey {
+  id              Int              @id @default(autoincrement())
+  uuid            String           @unique @default(uuid())
+  id_user         String           @default("")
+  nama_survey     String           @default("")
+  deskripsi       String?          @db.Text
+  jenis_responden Responden        @default(ALL)
+  status          Boolean          @default(true)
+  responden_group String           @db.Text
+  public_link     String           @default("")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  pertanyaan      pertanyaan[]
+  hasil_survey    hasil_survey[]
+  kategori        kategori[]
+  lokasi_petugas  lokasi_petugas[]
+  assignments     assignments[]
+}
+
+model kategori {
+  id            Int          @id @default(autoincrement())
+  uuid          String       @unique @default(uuid())
+  id_survey     String       @default("")
+  nama_kategori String       @default("")
+  deskripsi     String?      @db.Text
+  order_index   Int          @default(0)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  survey        survey       @relation(fields: [id_survey], references: [uuid])
+  pertanyaan    pertanyaan[]
+}
+
+model pertanyaan {
+  id                  Int               @id @default(autoincrement())
+  uuid                String            @unique @default(uuid())
+  id_kategori         String            @default("")
+  kategori            String            @default("")
+  pertanyaan          String            @db.Text
+  deskripsi_bantuan   String?           @db.Text
+  jenis               JenisPertanyaan   @default(PILIHAN)
+  required            Boolean           @default(true)
+  id_survey           String            @default("")
+  order_index         Int               @default(0)
+  for_responden_group String            @db.Text
+  for_sub_role        String?           @db.Text
+  file_config         String?           @db.Text
+  scale_config        String?           @db.Text
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  survey              survey            @relation(fields: [id_survey], references: [uuid])
+  opsi_pertanyaan     opsi_pertanyaan[]
+  jawaban_survey      jawaban_survey[]
+  detail_kategori     kategori          @relation(fields: [id_kategori], references: [uuid])
+  target_rules        logic_pertanyaan[] @relation("RuleTargetQuestion")
+  source_rules        logic_pertanyaan[] @relation("RuleSourceQuestion")
+}
+
+model opsi_pertanyaan {
+  id                 Int                @id @default(autoincrement())
+  uuid               String             @unique @default(uuid())
+  id_pertanyaan      String             @default("")
+  opsi_jawaban       String             @db.Text
+  order_index        Int                @default(0)
+  ada_catatan        Boolean            @default(false)
+  keterangan_catatan String?            @db.Text
+  goto_kategori_uuid String?            @default("")
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  pertanyaan         pertanyaan         @relation(fields: [id_pertanyaan], references: [uuid])
+  pemicu_rules       logic_pertanyaan[]
+}
+
+model logic_pertanyaan {
+  id                   Int              @id @default(autoincrement())
+  uuid                 String           @unique @default(uuid())
+  id_target_pertanyaan String
+  id_source_pertanyaan String
+  id_opsi_pemicu       String?
+  operator             LogicOperator    @default(EQUALS)
+  nilai_pemicu         String?          @db.Text
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+
+  target_pertanyaan    pertanyaan       @relation("RuleTargetQuestion", fields: [id_target_pertanyaan], references: [uuid])
+  source_pertanyaan    pertanyaan       @relation("RuleSourceQuestion", fields: [id_source_pertanyaan], references: [uuid])
+  opsi_pemicu          opsi_pertanyaan? @relation(fields: [id_opsi_pemicu], references: [uuid])
+}
+
+model instansi {
+  id                 Int                 @id @default(autoincrement())
+  uuid               String              @unique @default(uuid())
+  kode_instansi      String              @default("")
+  npsn               String              @default("")
+  nama_instansi      String              @default("")
+  kota               String              @default("")
+  provinsi           String              @default("")
+  alamat             String              @default("")
+  tipe               TipeInstansi        @default(SEKOLAH)
+  user_id            String              @unique @default("")
+  id_jenis_responden String              @default("")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  user               users?              @relation(fields: [user_id], references: [uuid])
+  assignments        assignments[]
+  responden          responden[]
+  responden_sekolah  responden_sekolah[]
+  hasil_survey       hasil_survey[]
+}
+
+model responden_sekolah {
+  id              Int              @id @default(autoincrement())
+  uuid            String           @unique @default(uuid())
+  id_instansi     String           @default("")
+  sub_role        SubRoleResponden @default(SISWA)
+  nomor_identitas String           @default("") // NIS / NISN / NUPTK
+  nama_lengkap    String           @default("")
+  kontak          String           @default("")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  instansi        instansi         @relation(fields: [id_instansi], references: [uuid])
+  hasil_survey    hasil_survey[]
+}
+
+model hasil_survey {
+  id                     Int                      @id @default(autoincrement())
+  uuid                   String                   @unique @default(uuid())
+  id_user                String?
+  id_survey              String                   @default("")
+  id_instansi            String?
+  id_responden           String                   @default("")
+  id_responden_sekolah   String?
+  createdAt              DateTime                 @default(now())
+  updatedAt              DateTime                 @updatedAt
+  user                   users?                   @relation(fields: [id_user], references: [uuid])
+  survey                 survey                   @relation(fields: [id_survey], references: [uuid])
+  instansi               instansi?                @relation(fields: [id_instansi], references: [uuid])
+  responden              responden                @relation(fields: [id_responden], references: [uuid])
+  responden_sekolah      responden_sekolah?       @relation(fields: [id_responden_sekolah], references: [uuid])
+  jawaban_survey         jawaban_survey[]
+  tanda_tangan_responden tanda_tangan_responden[]
+  dokumen_survey         dokumen_survey[]
+  dokumentasi_survey     dokumentasi_survey[]
+}
+
+model dokumen_survey {
+  id              Int          @id @default(autoincrement())
+  uuid            String       @unique @default(uuid())
+  id_hasil_survey String       @default("")
+  nama_file       String       @default("")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  hasil_survey    hasil_survey @relation(fields: [id_hasil_survey], references: [uuid])
+}
+
+model dokumentasi_survey {
+  id              Int          @id @default(autoincrement())
+  uuid            String       @unique @default(uuid())
+  id_hasil_survey String       @default("")
+  nama_file       String       @default("")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  hasil_survey    hasil_survey @relation(fields: [id_hasil_survey], references: [uuid])
+}
+
+model jawaban_survey {
+  id                Int          @id @default(autoincrement())
+  uuid              String       @unique @default(uuid())
+  id_hasil_survey   String       @default("")
+  id_pertanyaan     String       @default("")
+  pertanyaan        String       @db.Text
+  jenis             String       @default("")
+  jawaban           String       @db.Text
+  catatan           String?      @db.Text
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  hasil_survey      hasil_survey @relation(fields: [id_hasil_survey], references: [uuid])
+  detail_pertanyaan pertanyaan   @relation(fields: [id_pertanyaan], references: [uuid])
+}
+
+model tanda_tangan_responden {
+  id              Int          @id @default(autoincrement())
+  uuid            String       @unique @default(uuid())
+  id_hasil_survey String       @default("")
+  nama_responden  String       @default("")
+  ttd             String       @db.Text
+  top             Int          @default(0)
+  width           Int          @default(0)
+  left            Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  hasil_survey    hasil_survey @relation(fields: [id_hasil_survey], references: [uuid])
+}
+
+model tanda_tangan_petugas {
+  id           Int      @id @default(autoincrement())
+  uuid         String   @unique @default(uuid())
+  id_user      String   @default("")
+  nama_petugas String   @default("")
+  ttd          String   @db.Text
+  top          Int      @default(0)
+  width        Int      @default(0)
+  left         Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  users        users    @relation(fields: [id_user], references: [uuid])
+}
+
+model lokasi_petugas {
+  id             Int        @id @default(autoincrement())
+  uuid           String     @unique @default(uuid())
+  id_survey      String     @default("")
+  nama_survey    String     @default("")
+  id_petugas     String     @default("")
+  nama_petugas   String     @default("")
+  id_responden   String     @default("")
+  nama_responden String     @default("")
+  latitude       String     @default("")
+  longitude      String     @default("")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  responden      responden? @relation(fields: [id_responden], references: [uuid])
+  petugas        users?     @relation(fields: [id_petugas], references: [uuid])
+  survey         survey?    @relation(fields: [id_survey], references: [uuid])
+}
+
+model assignments {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @default(uuid())
+  id_survey     String    @default("")
+  nama_survey   String    @default("")
+  id_petugas    String    @default("")
+  nama_petugas  String    @default("")
+  id_instansi   String    @default("")
+  nama_instansi String    @default("")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  petugas       users?    @relation(fields: [id_petugas], references: [uuid])
+  survey        survey?   @relation(fields: [id_survey], references: [uuid])
+  instansi      instansi? @relation(fields: [id_instansi], references: [uuid])
+}
+
+enum Role {
+  ADMIN
+  PETUGAS
+  SEKOLAH
+  DINAS
+}
+
+enum SubRoleResponden {
+  SISWA
+  GURU
+  KEPALA_SEKOLAH
+  UMUM
+}
+
+enum TipeInstansi {
+  SEKOLAH
+  DINAS
+}
+
+enum JenisPertanyaan {
+  PILIHAN
+  ISIAN
+  CHECKBOX
+  PILIHAN_GANDA
+  KOTAK_CENTANG
+  DROPDOWN
+  ISIAN_SINGKAT
+  PARAGRAF
+  UPLOAD_FILE
+  SKALA_LINEAR
+  TANGGAL
+}
+
+enum LogicOperator {
+  EQUALS
+  NOT_EQUALS
+  IN
+  IS_EMPTY
+  IS_NOT_EMPTY
+}
+
+enum Responden {
+  SEKOLAH
+  DINAS
+  ALL
+  PUBLIC
+}
